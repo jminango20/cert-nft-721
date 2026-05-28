@@ -1,5 +1,6 @@
 import Link from "next/link";
 import CertificateCard from "@/components/CertificateCard";
+import EvidenceList, { EvidenceItem } from "@/components/EvidenceList";
 import { CertificateInfo } from "@/lib/api";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
@@ -52,6 +53,13 @@ export default async function VerifyTokenPage({
                 : "CERTIFICADO VÁLIDO"}
             </div>
             <CertificateCard cert={cert} />
+            {Array.isArray((cert.metadata as Record<string, unknown> | null)?.evidence) && (
+              <EvidenceList
+                evidence={
+                  (cert.metadata as { evidence: EvidenceItem[] }).evidence
+                }
+              />
+            )}
           </div>
         )}
       </div>

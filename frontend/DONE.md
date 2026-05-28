@@ -58,6 +58,21 @@ npm run dev
 - Generated `public/icon-192.png` (192x192, #6366f1) and `public/icon-512.png`
   (512x512, #6366f1) referenced by `public/manifest.json`.
 
+### Issue 4 — Evidence section on verify page
+
+- Created `components/EvidenceList.tsx` — client component (`"use client"`) that
+  renders each `evidence[]` item from the certificate IPFS metadata as a card.
+  - Icon per type: document (PDF/red), image (blue), link (green), video (purple).
+  - Per-card open/download button that resolves `ipfs://` URLs via Pinata gateway.
+  - Optional "Verificar integridade" button: fetches the file, computes
+    `keccak256(Uint8Array)` via `viem`, compares with the stored `hash` field,
+    and displays a green ✓ or red ✗ badge with the first 18 chars of both hashes.
+  - No wallet / wagmi / privy imports — SSR safe.
+- Updated `app/verify/[tokenId]/page.tsx` — imports `EvidenceList` and renders it
+  below `CertificateCard` when `metadata.evidence` is a non-empty array.
+
+---
+
 ### Issue 3 — layout.tsx is now a server component
 
 - Created `app/providers.tsx` (`"use client"`) — wraps PrivyProvider, WagmiProvider,
