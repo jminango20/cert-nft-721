@@ -1,0 +1,13 @@
+import { PrivyClientConfig } from "@privy-io/react-auth";
+
+export const privyConfig: PrivyClientConfig = {
+  loginMethods: ["email", "wallet"],
+  appearance: {
+    theme: "light",
+    accentColor: "#2563eb",
+    logo: "/logo.png",
+  },
+  embeddedWallets: {
+    createOnLogin: "users-without-wallets",
+  },
+};
