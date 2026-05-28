@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import rateLimit from "express-rate-limit";
 import { validate } from "../middleware/validate";
 import { requireApiKey } from "../middleware/auth";
 import { uploadMetadata } from "../services/ipfs";
@@ -7,6 +8,13 @@ import { mintCertificate } from "../services/blockchain";
 import { CertificateMetadata } from "../types";
 
 const router = Router();
+
+const mintLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const MintSchema = z.object({
   studentWallet: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "Invalid wallet address"),
@@ -16,7 +24,7 @@ const MintSchema = z.object({
   courseId: z.string().min(1).max(100),
 });
 
-router.post("/", requireApiKey, validate(MintSchema), async (req, res) => {
+router.post("/", mintLimiter, requireApiKey, validate(MintSchema), async (req, res) => {
   try {
     const { studentWallet, courseName, studentIdHash, issuedAt, courseId } = req.body;
 
