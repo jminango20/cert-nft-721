@@ -1,13 +1,11 @@
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
-const API_KEY = process.env.NEXT_PUBLIC_API_KEY ?? "";
 
-async function post<T>(path: string, body: unknown, auth = false): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (auth) headers["x-api-key"] = API_KEY;
-
-  const res = await fetch(`${BACKEND_URL}${path}`, {
+// Authenticated mutations route through Next.js server-side handlers so that
+// the API key is never included in the client bundle.
+async function postLocal<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(path, {
     method: "POST",
-    headers,
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 
@@ -47,7 +45,10 @@ export interface CertificateInfo {
 }
 
 export const api = {
-  mint: (payload: MintPayload) => post<MintResult>("/api/mint", payload, true),
-  revoke: (tokenId: number) => post<{ txHash: string; tokenId: number }>("/api/revoke", { tokenId }, true),
+  // Calls the local Next.js route handler — API key stays server-side only.
+  mint: (payload: MintPayload) => postLocal<MintResult>("/api/mint", payload),
+  revoke: (tokenId: number) =>
+    postLocal<{ txHash: string; tokenId: number }>("/api/revoke", { tokenId }),
+  // Public read — goes directly to backend, no secret needed.
   verify: (tokenId: string | number) => get<CertificateInfo>(`/api/verify/${tokenId}`),
 };
