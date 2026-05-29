@@ -1,6 +1,38 @@
 # Frontend — DONE
 
-## O que foi construído
+## Semana 1 — Formulario admin completo, /claim/[token], /verify en espanol
+
+### Nuevas paginas
+| Rota | Descripcion |
+|------|-------------|
+| `/claim/[token]` | Preview certificado + login Privy + reclamacion NFT |
+
+### Paginas actualizadas
+| Rota | Cambios |
+|------|---------|
+| `/admin` | Formulario completo europeo en espanol, toggle wallet/email, seccion evidencias, dashboard |
+| `/verify/[tokenId]` | Todo en espanol, seccion "Prueba Blockchain", evidencias con hash + descarga |
+
+### Componentes nuevos / actualizados
+- `MintForm` — formulario completo: recipientName, email, courseTitle, courseId, ISTER (fijo), pais, fecha, learningOutcomes, ECTS, EQF (1-8), assessmentType, modalidad, evidencias con upload PDF/imagen
+- `RevokeForm` — traducido al espanol
+- `CertDashboard` — dashboard con lista de certificados emitidos via Transfer events (ethers v5)
+- `ClaimPage` — /claim/[token]: preview, login Privy, POST claim con walletAddress
+
+### Proxy API routes
+- `app/api/claim/[token]/route.ts` — GET/POST proxy al backend /api/claim/:token
+
+### .env.example creado
+- `NEXT_PUBLIC_CONTRACT_ADDRESS`, `NEXT_PUBLIC_RPC_URL` anadidos
+
+### Reglas respetadas
+- Todo el UI en espanol
+- Wallet nunca mostrada al usuario en flujo email
+- TypeScript compila sin errores
+
+---
+
+## O que foi construído (semanas anteriores)
 
 Next.js 14 App Router PWA com três fluxos de uso.
 

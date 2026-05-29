@@ -30,9 +30,11 @@ export interface MintPayload {
 }
 
 export interface MintResult {
-  tokenId: string;
-  txHash: string;
+  tokenId?: string;
+  txHash?: string;
   ipfsCid: string;
+  claimToken?: string;
+  flow: "direct-mint" | "claim-by-email";
 }
 
 export interface CertificateInfo {
@@ -44,6 +46,29 @@ export interface CertificateInfo {
   metadata: Record<string, unknown> | null;
 }
 
+export interface ClaimPreview {
+  courseTitle: string;
+  courseId: string;
+  issueDate: string;
+  ects: number;
+  eqfLevel: number;
+  assessmentType: string;
+  participationMode: string;
+  learningOutcomes: string;
+  evidences: EvidenceItem[];
+  ipfsCid?: string;
+  alreadyClaimed: boolean;
+  tokenId?: string;
+}
+
+export interface EvidenceItem {
+  type: string;
+  title: string;
+  url: string;
+  hash?: string;
+  mimeType?: string;
+}
+
 export const api = {
   // Calls the local Next.js route handler — API key stays server-side only.
   mint: (payload: MintPayload) => postLocal<MintResult>("/api/mint", payload),
@@ -51,4 +76,6 @@ export const api = {
     postLocal<{ txHash: string; tokenId: number }>("/api/revoke", { tokenId }),
   // Public read — goes directly to backend, no secret needed.
   verify: (tokenId: string | number) => get<CertificateInfo>(`/api/verify/${tokenId}`),
+  // Claim flow
+  getClaim: (token: string) => get<ClaimPreview>(`/api/claim/${token}`),
 };
