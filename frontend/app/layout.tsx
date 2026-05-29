@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Providers from "./providers";
 
@@ -6,9 +6,9 @@ export const metadata: Metadata = {
   title: "EduCert — Certificados NFT",
   description: "Certificados educacionais como NFTs soulbound na Sepolia",
   manifest: "/manifest.json",
-  themeColor: "#2563eb",
-  viewport: "width=device-width, initial-scale=1",
 };
+
+export const viewport: Viewport = { themeColor: "#2563eb" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

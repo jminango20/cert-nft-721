@@ -80,3 +80,25 @@ npm run dev
 - Rewrote `app/layout.tsx` — no `"use client"` directive; exports `metadata` const
   for Next.js SEO; delegates client tree to `<Providers>`.
 
+---
+
+## Build fixes (2026-05-29)
+
+### Fix 1 — webpack alias for React Native async-storage
+
+- Added `webpack` callback in `next.config.js` that sets
+  `config.resolve.alias["@react-native-async-storage/async-storage"] = false`.
+- Prevents build error when Privy/wagmi pulls in this React Native package.
+
+### Fix 2 — separate `viewport` export in layout.tsx
+
+- Added `import type { Viewport } from "next"` to `app/layout.tsx`.
+- Extracted `themeColor` and `viewport` out of `export const metadata` into a
+  dedicated `export const viewport: Viewport = { themeColor: "#2563eb" }`.
+- Satisfies Next.js 14 requirement that viewport config lives in its own export.
+
+### Fix 3 — .env.local.example already present
+
+- `frontend/.env.local.example` already existed with `NEXT_PUBLIC_PRIVY_APP_ID`
+  and other keys — no changes needed.
+
