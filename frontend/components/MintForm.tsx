@@ -48,7 +48,7 @@ export default function MintForm() {
     eqfLevel: "5",
     assessmentType: "",
     participationMode: "Online",
-    studentIdHash: "",
+    studentId: "",
   });
 
   const [evidences, setEvidences] = useState<EvidenceEntry[]>([]);
@@ -87,7 +87,7 @@ export default function MintForm() {
       fd.append("recipientName", form.recipientName);
       fd.append("courseTitle", form.courseTitle);
       fd.append("courseId", form.courseId);
-      fd.append("studentIdHash", form.studentIdHash || `hash-${Date.now()}`);
+      fd.append("studentId", form.studentId);
       fd.append("issueDate", form.issueDate);
       fd.append("ects", form.ects);
       fd.append("eqfLevel", form.eqfLevel);
@@ -364,18 +364,19 @@ export default function MintForm() {
           </select>
         </div>
 
-        {/* --- Student ID Hash (avanzado) --- */}
+        {/* --- ID interno del alumno --- */}
         <div>
-          <label className={labelCls}>ID Alumno (hash interno)</label>
+          <label className={labelCls}>ID interno del alumno *</label>
           <input
             type="text"
-            placeholder="Hash opaco del ID interno (sin datos personales)"
-            value={form.studentIdHash}
-            onChange={(e) => setField("studentIdHash", e.target.value)}
+            placeholder="ISTER-2024-001"
+            value={form.studentId}
+            onChange={(e) => setField("studentId", e.target.value)}
             className={inputCls}
+            required
           />
           <p className="text-xs text-gray-400 mt-1">
-            Se genera automaticamente si se deja vacio. Nunca uses datos personales reales.
+            Identificador interno del alumno. El backend calcula el hash; este dato no se publica.
           </p>
         </div>
 
@@ -442,7 +443,7 @@ export default function MintForm() {
                     </label>
                     <input
                       type="file"
-                      accept={ev.type === "PDF" ? "application/pdf" : "application/pdf,image/*"}
+                      accept={ev.type === "PDF" ? "application/pdf" : "image/png,image/jpeg,image/webp"}
                       ref={(el) => { fileRefs.current[i] = el; }}
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null;

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import multer from "multer";
-import { keccak256 } from "ethers";
+import { keccak256, toUtf8Bytes } from "ethers";
 import { v4 as uuidv4 } from "uuid";
 import rateLimit from "express-rate-limit";
 import { requireApiKey } from "../middleware/auth";
@@ -46,7 +46,7 @@ const upload = multer({
  *
  * Fields:
  *   recipientName, recipientEmail, courseTitle, courseId,
- *   studentIdHash, issueDate, ects, eqfLevel (1-8),
+ *   studentId, issueDate, ects, eqfLevel (1-8),
  *   assessmentType, participationMode, learningOutcomes
  *   evidenceTitles[] (one per file, JSON array or repeated field)
  *   evidenceTypes[]  (one per file)
@@ -68,7 +68,7 @@ router.post(
         recipientEmail,
         courseTitle,
         courseId,
-        studentIdHash,
+        studentId,
         issueDate,
         ects,
         eqfLevel,
@@ -78,10 +78,13 @@ router.post(
         walletAddress,
       } = req.body as Record<string, string>;
 
-      if (!recipientName || !courseTitle || !courseId || !studentIdHash || !issueDate) {
-        res.status(400).json({ error: "Missing required fields: recipientName, courseTitle, courseId, studentIdHash, issueDate" });
+      if (!recipientName || !courseTitle || !courseId || !studentId || !issueDate) {
+        res.status(400).json({ error: "Missing required fields: recipientName, courseTitle, courseId, studentId, issueDate" });
         return;
       }
+
+      // Compute hash internally — plain studentId never leaves this function
+      const studentIdHash = keccak256(toUtf8Bytes(studentId));
 
       const ectsNum = Number(ects);
       const eqfNum = Number(eqfLevel);

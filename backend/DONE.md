@@ -1,5 +1,21 @@
 # Backend — DONE
 
+## QA B2 — studentId internalization + frontend file-input fix
+
+### Alteracoes
+- `routes/mint.ts`: campo externo `studentIdHash` removido; substituido por `studentId` (texto puro). O backend computa `keccak256(toUtf8Bytes(studentId))` internamente — o valor nunca sai do servidor nem vai para IPFS.
+- `routes/mint.ts`: importado `toUtf8Bytes` de ethers v6 ao lado de `keccak256`.
+- `types/index.ts`: `MintRequest.studentIdHash` renomeado para `studentId`.
+- `frontend/components/MintForm.tsx`: campo `studentIdHash` renomeado para `studentId`; label e placeholder atualizados; FormData envia `studentId`; campo marcado como obrigatorio.
+- `frontend/components/MintForm.tsx`: `accept` do file input de imagens corrigido de `application/pdf,image/*` para `image/png,image/jpeg,image/webp`.
+- `mint-test.json` na raiz do projeto deletado (arquivo stale de testes manuais).
+
+### Regras respeitadas
+- Dados pessoais NUNCA on-chain nem IPFS (studentId permanece apenas no servidor/BD)
+- TypeScript compilavel sem erros
+
+---
+
 ## Semana 2 — Multer, keccak256, claimed flag
 
 ### Alterações

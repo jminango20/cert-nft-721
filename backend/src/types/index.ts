@@ -1,7 +1,7 @@
 export interface MintRequest {
   studentWallet: string;
   courseName: string;
-  studentIdHash: string;
+  studentId: string;
   issuedAt: string;
   courseId: string;
 }
