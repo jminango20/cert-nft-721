@@ -50,3 +50,26 @@ export async function uploadEvidenceFile(
     return null;
   }
 }
+
+/**
+ * Uploads a Buffer (from multer memory storage) to IPFS via Pinata.
+ * Returns { cid, ipfsUri } on success, or null on failure.
+ */
+export async function uploadBufferToIPFS(
+  buffer: Buffer,
+  filename: string,
+  mimeType: string
+): Promise<{ cid: string; ipfsUri: string } | null> {
+  try {
+    const pinata = getClient();
+    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_") || "evidence";
+    const file = new File([buffer], safeName, { type: mimeType });
+    const result = await pinata.upload.public
+      .file(file)
+      .name(`educert-evidence-${Date.now()}-${safeName}`);
+    return { cid: result.cid, ipfsUri: `ipfs://${result.cid}` };
+  } catch (err) {
+    console.error(`[ipfs] uploadBufferToIPFS failed for "${filename}":`, err);
+    return null;
+  }
+}

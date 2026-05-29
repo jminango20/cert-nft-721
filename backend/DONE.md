@@ -1,6 +1,38 @@
 # Backend — DONE
 
-## O que foi construído
+## Semana 1 — Upload de evidências + claim-by-email + Resend
+
+### Novos endpoints
+
+| Método | Rota | Auth | Descrição |
+|--------|------|------|-----------|
+| GET | /api/claim/:token | — | Preview certificado por claim token |
+| POST | /api/claim/:token | — | Associa wallet + mint NFT |
+
+### POST /api/mint actualizado
+
+Aceita `multipart/form-data` com campos europeus completos:
+- `recipientName`, `recipientEmail`, `courseTitle`, `courseId`, `studentIdHash`
+- `issueDate`, `ects`, `eqfLevel` (1-8), `assessmentType`, `participationMode`, `learningOutcomes`
+- `evidences[]` — ficheiros PDF/imagem (max 10MB, max 10 ficheiros)
+- `evidenceTitles[]`, `evidenceTypes[]`
+- `walletAddress` — opcional; omitido activa fluxo claim-by-email
+
+### Novos serviços
+- `claims.ts` — persistência claims.json com TTL 48h
+- `email.ts` — Resend SDK, template HTML espanhol
+
+### Variáveis adicionadas ao .env.example
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+
+### Regras respeitadas
+- Dados pessoais NUNCA on-chain nem IPFS
+- TypeScript compila sem erros
+
+---
+
+## O que foi construído (Semana 0)
 
 API Express/TypeScript para o EduCert.
 

@@ -45,3 +45,25 @@ export interface CertificateMetadata {
   attributes: Array<{ trait_type: string; value: string }>;
   evidence?: EvidenceItem[];
 }
+
+export interface ClaimRecord {
+  token: string;
+  recipientName: string;
+  recipientEmail: string;
+  courseTitle: string;
+  courseId: string;
+  studentIdHash: string;
+  issueDate: string;
+  ects: number;
+  eqfLevel: number;
+  assessmentType: string;
+  participationMode: string;
+  learningOutcomes: string;
+  evidences: EvidenceItem[];
+  ipfsCid?: string;
+  walletAddress?: string;
+  tokenId?: string;
+  txHash?: string;
+  expiresAt: number;
+  createdAt: number;
+}
