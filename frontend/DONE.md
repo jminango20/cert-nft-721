@@ -1,5 +1,62 @@
 # Frontend — DONE
 
+## Sesion actual (2026-05-29) — Rediseno completo UI en espanol
+
+### Paginas actualizadas / creadas
+
+| Ruta | Estado | Cambios |
+|------|--------|---------|
+| `/` | Actualizada | Todo el texto en espanol |
+| `/admin` | Actualizada | MintForm con 3 modos de entrega, CertDashboard con filtros y revocacion via wagmi |
+| `/aluno` | Actualizada | Todo el texto en espanol, wallet no expuesta |
+| `/verify` | Actualizada | Texto en espanol |
+| `/verify/[tokenId]` | Actualizada | Secciones: Estado, Detalles Academicos, Prueba Blockchain, Evidencias, QR code |
+| `/claim/[token]` | Sin cambios | Ya estaba en espanol y funcional |
+
+### Componentes nuevos
+
+- `components/QRCodeSection.tsx` — componente cliente que renderiza QR code con `qrcode.react`
+
+### Componentes actualizados
+
+| Componente | Cambios |
+|-----------|---------|
+| `MintForm` | Tercer modo "Link de claim" (sin email); ECTS min 0.5; muestra claim URL en exito |
+| `CertDashboard` | Reescrito con viem (sin ethers); filtros por wallet/curso/ID; filtro estado; revocacion via wagmi `writeContract` |
+| `CertificateCard` | Texto en espanol; wallet no expuesta; link a /verify |
+| `PrivyButton` | Texto en espanol; no muestra wallet del alumno |
+| `EvidenceList` | Texto en espanol (labels, mensajes de verificacion de hash) |
+
+### Lib actualizada
+
+- `lib/contractAbi.ts` — anadida funcion `revoke(uint256)` + alias `contractAbi`
+
+### Variables de entorno
+
+Anadida `NEXT_PUBLIC_APP_URL` a `.env.example` y `.env.local.example` (necesaria para generar la URL del QR en SSR).
+
+### Dependencias anadidas
+
+| Paquete | Version | Uso |
+|---------|---------|-----|
+| `qrcode.react` | ^4.2.0 | QR code en /verify/[tokenId] |
+
+### Reglas respetadas
+
+- Todo el texto de la UI en espanol
+- Wallet del alumno nunca visible para terceros (PrivyButton muestra solo email, CertificateCard no muestra owner)
+- /verify/[tokenId] funciona sin JavaScript (SSR con Next.js App Router, QRCodeSection es el unico fragmento cliente)
+- QR code apunta a /verify/[tokenId]
+- Build Next.js pasa sin errores de TypeScript
+
+### Pendiente / fuera de alcance
+
+- Red configurada como Sepolia (cambio a Polygon Amoy pendiente segun instruccion del usuario)
+- TX hash en CertDashboard no disponible sin enriquecer los eventos on-chain con datos del backend
+- Paginacion en CertDashboard si hay muchos certificados
+
+---
+
 ## Semana 1 — Formulario admin completo, /claim/[token], /verify en espanol
 
 ### Nuevas paginas
@@ -32,24 +89,24 @@
 
 ---
 
-## O que foi construído (semanas anteriores)
+## O que foi construido (semanas anteriores)
 
-Next.js 14 App Router PWA com três fluxos de uso.
+Next.js 14 App Router PWA com tres fluxos de uso.
 
-### Páginas
+### Paginas
 
-| Rota | Fluxo | Descrição |
+| Rota | Fluxo | Descricao |
 |------|-------|-----------|
 | `/` | — | Landing page com links para os 3 fluxos |
 | `/admin` | Admin (MetaMask/wagmi) | Emitir + revogar certificados |
-| `/aluno` | Aluno (Privy) | Buscar e visualizar certificado próprio |
-| `/verify` | Público | Formulário de busca por Token ID |
-| `/verify/[tokenId]` | Público | Detalhe com status VÁLIDO / REVOGADO |
+| `/aluno` | Aluno (Privy) | Buscar e visualizar certificado proprio |
+| `/verify` | Publico | Formulario de busca por Token ID |
+| `/verify/[tokenId]` | Publico | Detalhe com status VALIDO / REVOGADO |
 
 ### Componentes
 
-- `MintForm` — formulário de emissão com hash de studentId
-- `RevokeForm` — revogação com confirmação em dois cliques
+- `MintForm` — formulario de emissao com hash de studentId
+- `RevokeForm` — revogacao com confirmacao em dois cliques
 - `CertificateCard` — exibe certificado (curso, status, datas)
 - `ConnectButton` — MetaMask via wagmi
 - `PrivyButton` — login via Privy (e-mail ou carteira)
@@ -59,7 +116,7 @@ Next.js 14 App Router PWA com três fluxos de uso.
 - `wagmiConfig.ts` — Polygon Amoy chain config
 - `privyConfig.ts` — Privy login methods
 - `api.ts` — wrappers fetch para o backend
-- `contractAbi.ts` — ABI mínima para leituras on-chain
+- `contractAbi.ts` — ABI minima para leituras on-chain
 
 ### Como rodar
 
@@ -76,41 +133,26 @@ npm run dev
 
 ### Issue 1 — NEXT_PUBLIC_API_KEY removed from browser bundle
 
-- Created `app/api/mint/route.ts` — Next.js Route Handler that reads `API_KEY`
-  from `process.env.API_KEY` (server-only) and proxies POST to the Express backend.
-- Created `app/api/revoke/route.ts` — same pattern for revoke.
-- Updated `lib/api.ts` — `mint` and `revoke` now call `/api/mint` and `/api/revoke`
-  (local Next.js routes); `NEXT_PUBLIC_API_KEY` removed entirely.
-- Updated `.env.local.example` — replaced `NEXT_PUBLIC_API_KEY` with `API_KEY`.
+- Created `app/api/mint/route.ts` — Next.js Route Handler que lee `API_KEY`
+  desde `process.env.API_KEY` (server-only) y hace proxy POST al Express backend.
+- Created `app/api/revoke/route.ts` — mismo patron para revoke.
+- Updated `lib/api.ts` — `mint` y `revoke` ahora llaman `/api/mint` y `/api/revoke`
+  (rutas locales Next.js); `NEXT_PUBLIC_API_KEY` eliminado.
+- Updated `.env.local.example` — reemplazado `NEXT_PUBLIC_API_KEY` con `API_KEY`.
 
 ### Issue 2 — PWA icons created
 
-- Added `scripts/generate-icons.mjs` — zero-dependency Node script that writes
-  valid deflate-compressed RGB PNGs.
-- Generated `public/icon-192.png` (192x192, #6366f1) and `public/icon-512.png`
-  (512x512, #6366f1) referenced by `public/manifest.json`.
+- Added `scripts/generate-icons.mjs` — script Node sin dependencias.
+- Generated `public/icon-192.png` y `public/icon-512.png`.
 
 ### Issue 4 — Evidence section on verify page
 
-- Created `components/EvidenceList.tsx` — client component (`"use client"`) that
-  renders each `evidence[]` item from the certificate IPFS metadata as a card.
-  - Icon per type: document (PDF/red), image (blue), link (green), video (purple).
-  - Per-card open/download button that resolves `ipfs://` URLs via Pinata gateway.
-  - Optional "Verificar integridade" button: fetches the file, computes
-    `keccak256(Uint8Array)` via `viem`, compares with the stored `hash` field,
-    and displays a green ✓ or red ✗ badge with the first 18 chars of both hashes.
-  - No wallet / wagmi / privy imports — SSR safe.
-- Updated `app/verify/[tokenId]/page.tsx` — imports `EvidenceList` and renders it
-  below `CertificateCard` when `metadata.evidence` is a non-empty array.
-
----
+- Created `components/EvidenceList.tsx` — componente cliente con verificacion de hash keccak256 via `viem`.
 
 ### Issue 3 — layout.tsx is now a server component
 
-- Created `app/providers.tsx` (`"use client"`) — wraps PrivyProvider, WagmiProvider,
-  QueryClientProvider.
-- Rewrote `app/layout.tsx` — no `"use client"` directive; exports `metadata` const
-  for Next.js SEO; delegates client tree to `<Providers>`.
+- Created `app/providers.tsx` (`"use client"`) — envuelve PrivyProvider, WagmiProvider, QueryClientProvider.
+- Rewrote `app/layout.tsx` — sin `"use client"`; exporta `metadata` y `viewport`.
 
 ---
 
@@ -118,19 +160,8 @@ npm run dev
 
 ### Fix 1 — webpack alias for React Native async-storage
 
-- Added `webpack` callback in `next.config.js` that sets
-  `config.resolve.alias["@react-native-async-storage/async-storage"] = false`.
-- Prevents build error when Privy/wagmi pulls in this React Native package.
+- Added `webpack` callback in `next.config.js`.
 
 ### Fix 2 — separate `viewport` export in layout.tsx
 
-- Added `import type { Viewport } from "next"` to `app/layout.tsx`.
-- Extracted `themeColor` and `viewport` out of `export const metadata` into a
-  dedicated `export const viewport: Viewport = { themeColor: "#2563eb" }`.
-- Satisfies Next.js 14 requirement that viewport config lives in its own export.
-
-### Fix 3 — .env.local.example already present
-
-- `frontend/.env.local.example` already existed with `NEXT_PUBLIC_PRIVY_APP_ID`
-  and other keys — no changes needed.
-
+- Extraido `themeColor` a `export const viewport: Viewport`.

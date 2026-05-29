@@ -8,7 +8,7 @@ import CertificateCard from "@/components/CertificateCard";
 import { api, CertificateInfo } from "@/lib/api";
 
 export default function AlunoPage() {
-  const { ready, authenticated, user } = usePrivy();
+  const { ready, authenticated } = usePrivy();
   const [tokenId, setTokenId] = useState("");
   const [cert, setCert] = useState<CertificateInfo | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,13 +21,9 @@ export default function AlunoPage() {
     setCert(null);
     try {
       const result = await api.verify(tokenId);
-      if (user?.wallet?.address && result.owner.toLowerCase() !== user.wallet.address.toLowerCase()) {
-        setError("Este certificado não pertence à sua carteira.");
-      } else {
-        setCert(result);
-      }
+      setCert(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao buscar certificado");
+      setError(err instanceof Error ? err.message : "Error al buscar el certificado");
     } finally {
       setLoading(false);
     }
@@ -38,10 +34,10 @@ export default function AlunoPage() {
       <header className="flex items-center justify-between mb-8">
         <div>
           <Link href="/" className="text-sm text-brand-600 hover:underline mb-1 block">
-            ← Início
+            Inicio
           </Link>
-          <h1 className="text-2xl font-bold text-gray-800">Meus Certificados</h1>
-          <p className="text-sm text-gray-500">Acesso via Privy</p>
+          <h1 className="text-2xl font-bold text-gray-800">Mis Certificados</h1>
+          <p className="text-sm text-gray-500">Acceso con email o Google via Privy</p>
         </div>
         <PrivyButton />
       </header>
@@ -50,10 +46,10 @@ export default function AlunoPage() {
         <div className="text-center py-20 bg-white rounded-xl shadow border border-gray-200">
           <div className="text-4xl mb-3">🎓</div>
           <h2 className="text-lg font-semibold text-gray-700 mb-2">
-            Entre para ver seus certificados
+            Inicia sesion para ver tus certificados
           </h2>
           <p className="text-sm text-gray-500 mb-6">
-            Faça login com seu e-mail ou carteira
+            Accede con tu email o cuenta de Google
           </p>
           <PrivyButton />
         </div>
@@ -76,7 +72,7 @@ export default function AlunoPage() {
                 disabled={loading}
                 className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors"
               >
-                {loading ? "..." : "Buscar"}
+                {loading ? "Buscando..." : "Buscar"}
               </button>
             </form>
           </div>

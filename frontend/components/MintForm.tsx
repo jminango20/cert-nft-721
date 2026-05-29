@@ -14,7 +14,8 @@ interface MintResult {
   txHash?: string;
   ipfsCid: string;
   claimToken?: string;
-  flow: "direct-mint" | "claim-by-email";
+  claimUrl?: string;
+  flow: "direct-mint" | "claim-by-email" | "claim-link";
 }
 
 const EVIDENCE_TYPES = ["PDF", "Imagen", "Enlace", "Video"];
@@ -29,8 +30,10 @@ const emptyEvidence = (): EvidenceEntry => ({
   url: "",
 });
 
+type DestinatarioMode = "wallet" | "email" | "link";
+
 export default function MintForm() {
-  const [destinatarioMode, setDestinatarioMode] = useState<"wallet" | "email">("wallet");
+  const [destinatarioMode, setDestinatarioMode] = useState<DestinatarioMode>("wallet");
 
   const [form, setForm] = useState({
     recipientName: "",
@@ -91,11 +94,16 @@ export default function MintForm() {
       fd.append("assessmentType", form.assessmentType);
       fd.append("participationMode", form.participationMode);
       fd.append("learningOutcomes", form.learningOutcomes);
+      fd.append("country", form.country);
 
       if (destinatarioMode === "email") {
         fd.append("recipientEmail", form.recipientEmail);
+        fd.append("flow", "claim-by-email");
+      } else if (destinatarioMode === "link") {
+        fd.append("flow", "claim-link");
       } else {
         fd.append("walletAddress", form.walletAddress);
+        fd.append("flow", "direct-mint");
       }
 
       const titles: string[] = [];
@@ -122,6 +130,12 @@ export default function MintForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error al emitir");
 
+      // Build the claim URL if we got a claim token back
+      if (data.claimToken && !data.claimUrl) {
+        const base = typeof window !== "undefined" ? window.location.origin : "";
+        data.claimUrl = `${base}/claim/${data.claimToken}`;
+      }
+
       setResult(data as MintResult);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -134,39 +148,44 @@ export default function MintForm() {
     "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500";
   const labelCls = "block text-sm font-medium text-gray-700 mb-1";
 
+  const modeBtn = (mode: DestinatarioMode, label: string) => (
+    <button
+      type="button"
+      onClick={() => setDestinatarioMode(mode)}
+      className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+        destinatarioMode === mode
+          ? "bg-brand-600 text-white border-brand-600"
+          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
       <h2 className="text-xl font-semibold mb-5">Emitir Microcredencial</h2>
 
       <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* --- Destinatario toggle --- */}
+        {/* --- Metodo de entrega --- */}
         <div>
           <p className={labelCls}>Metodo de entrega</p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setDestinatarioMode("wallet")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                destinatarioMode === "wallet"
-                  ? "bg-brand-600 text-white border-brand-600"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              Wallet directa (0x...)
-            </button>
-            <button
-              type="button"
-              onClick={() => setDestinatarioMode("email")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                destinatarioMode === "email"
-                  ? "bg-brand-600 text-white border-brand-600"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              Enlace de reclamacion por email
-            </button>
+          <div className="flex flex-wrap gap-2">
+            {modeBtn("wallet", "Wallet directa (0x...)")}
+            {modeBtn("email", "Email")}
+            {modeBtn("link", "Link de claim")}
           </div>
+          {destinatarioMode === "email" && (
+            <p className="text-xs text-gray-400 mt-2">
+              Se enviara un enlace de reclamacion al email del participante (validez 48 horas)
+            </p>
+          )}
+          {destinatarioMode === "link" && (
+            <p className="text-xs text-gray-400 mt-2">
+              Se genera un enlace de reclamacion sin enviar email
+            </p>
+          )}
         </div>
 
         {/* --- Nombre del participante --- */}
@@ -194,9 +213,6 @@ export default function MintForm() {
               className={inputCls}
               required
             />
-            <p className="text-xs text-gray-400 mt-1">
-              Se enviara un enlace de reclamacion con validez de 48 horas
-            </p>
           </div>
         )}
 
@@ -297,7 +313,8 @@ export default function MintForm() {
             <label className={labelCls}>Creditos ECTS *</label>
             <input
               type="number"
-              min="0"
+              min="0.5"
+              max="60"
               step="0.5"
               placeholder="5"
               value={form.ects}
@@ -421,7 +438,7 @@ export default function MintForm() {
                 {(ev.type === "PDF" || ev.type === "Imagen") ? (
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">
-                      Archivo ({ev.type === "PDF" ? "PDF" : "PDF o imagen"})
+                      Archivo ({ev.type === "PDF" ? "PDF" : "Imagen"})
                     </label>
                     <input
                       type="file"
@@ -468,42 +485,94 @@ export default function MintForm() {
       )}
 
       {result && (
-        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg text-sm">
+        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg text-sm space-y-2">
           {result.flow === "claim-by-email" ? (
             <>
-              <p className="font-medium text-green-800 mb-2">
-                Microcredencial creada. Enlace de reclamacion enviado por email.
+              <p className="font-medium text-green-800">
+                Microcredencial creada. Enlace de reclamacion enviado al email del participante.
               </p>
-              <dl className="space-y-1">
-                <div className="flex gap-2">
-                  <dt className="text-gray-600 shrink-0">Token de reclamacion:</dt>
-                  <dd className="font-mono text-xs truncate">{result.claimToken}</dd>
-                </div>
-                <div className="flex gap-2">
-                  <dt className="text-gray-600 shrink-0">IPFS CID:</dt>
-                  <dd className="font-mono text-xs truncate">{result.ipfsCid}</dd>
-                </div>
-              </dl>
+              <div className="space-y-1">
+                {result.claimUrl && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Enlace de reclamacion:</p>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-white border border-gray-200 rounded px-2 py-1 flex-1 truncate">
+                        {result.claimUrl}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(result.claimUrl ?? "")}
+                        className="text-xs text-brand-600 hover:underline shrink-0"
+                      >
+                        Copiar
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {result.ipfsCid && (
+                  <div className="flex gap-2">
+                    <span className="text-gray-600 shrink-0">IPFS CID:</span>
+                    <code className="font-mono text-xs truncate">{result.ipfsCid}</code>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : result.flow === "claim-link" ? (
+            <>
+              <p className="font-medium text-green-800">
+                Microcredencial creada. Enlace de reclamacion generado.
+              </p>
+              <div className="space-y-1">
+                {result.claimUrl && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Enlace de reclamacion:</p>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs bg-white border border-gray-200 rounded px-2 py-1 flex-1 truncate">
+                        {result.claimUrl}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(result.claimUrl ?? "")}
+                        className="text-xs text-brand-600 hover:underline shrink-0"
+                      >
+                        Copiar
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {result.ipfsCid && (
+                  <div className="flex gap-2">
+                    <span className="text-gray-600 shrink-0">IPFS CID:</span>
+                    <code className="font-mono text-xs truncate">{result.ipfsCid}</code>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>
-              <p className="font-medium text-green-800 mb-2">
+              <p className="font-medium text-green-800">
                 Certificado emitido correctamente.
               </p>
-              <dl className="space-y-1">
-                <div className="flex gap-2">
-                  <dt className="text-gray-600 shrink-0">Token ID:</dt>
-                  <dd className="font-mono font-bold">{result.tokenId}</dd>
-                </div>
-                <div className="flex gap-2">
-                  <dt className="text-gray-600 shrink-0">TX:</dt>
-                  <dd className="font-mono text-xs truncate">{result.txHash}</dd>
-                </div>
-                <div className="flex gap-2">
-                  <dt className="text-gray-600 shrink-0">IPFS CID:</dt>
-                  <dd className="font-mono text-xs truncate">{result.ipfsCid}</dd>
-                </div>
-              </dl>
+              <div className="space-y-1">
+                {result.tokenId && (
+                  <div className="flex gap-2">
+                    <span className="text-gray-600 shrink-0">Token ID:</span>
+                    <code className="font-mono font-bold">{result.tokenId}</code>
+                  </div>
+                )}
+                {result.txHash && (
+                  <div className="flex gap-2">
+                    <span className="text-gray-600 shrink-0">TX:</span>
+                    <code className="font-mono text-xs truncate">{result.txHash}</code>
+                  </div>
+                )}
+                {result.ipfsCid && (
+                  <div className="flex gap-2">
+                    <span className="text-gray-600 shrink-0">IPFS CID:</span>
+                    <code className="font-mono text-xs truncate">{result.ipfsCid}</code>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

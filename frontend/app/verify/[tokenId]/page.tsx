@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { CertificateInfo } from "@/lib/api";
+import QRCodeSection from "@/components/QRCodeSection";
+import EvidenceList from "@/components/EvidenceList";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
+const EXPLORER_BASE = "https://sepolia.etherscan.io";
 
 interface EvidenceItem {
   type: string;
@@ -43,10 +47,11 @@ export default async function VerifyTokenPage({
   params: { tokenId: string };
 }) {
   const cert = await getCert(params.tokenId);
+  const verifyUrl = `${APP_URL}/verify/${params.tokenId}`;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
-      <div className="max-w-2xl w-full space-y-4">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gray-50">
+      <div className="max-w-2xl w-full space-y-4 py-6">
         <Link href="/verify" className="text-sm text-brand-600 hover:underline block">
           Verificar otro certificado
         </Link>
@@ -63,27 +68,48 @@ export default async function VerifyTokenPage({
         ) : (
           <div className="space-y-4">
 
-            {/* Status badge */}
+            {/* Estado del Certificado */}
             <div
-              className={`rounded-xl p-4 text-center font-semibold text-lg ${
+              className={`rounded-xl p-5 border ${
                 cert.isRevoked
-                  ? "bg-red-100 text-red-800 border border-red-300"
-                  : "bg-green-100 text-green-800 border border-green-300"
+                  ? "bg-red-50 text-red-800 border-red-300"
+                  : "bg-green-50 text-green-800 border-green-300"
               }`}
             >
-              {cert.isRevoked ? "Revocado" : "Valido"}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide opacity-70 mb-1">
+                    Estado del Certificado
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {cert.isRevoked ? "Revocado" : "Valido"}
+                  </p>
+                  {getAttribute(cert.metadata, "Nombre del Participante") !== "—" && (
+                    <p className="text-base mt-1 opacity-90">
+                      {getAttribute(cert.metadata, "Nombre del Participante")}
+                    </p>
+                  )}
+                  <p className="text-sm opacity-80 mt-0.5">
+                    {getAttribute(cert.metadata, "Microcredencial") !== "—"
+                      ? getAttribute(cert.metadata, "Microcredencial")
+                      : `Certificado #${cert.tokenId}`}
+                    {" — "}
+                    {getAttribute(cert.metadata, "Institucion") !== "—"
+                      ? getAttribute(cert.metadata, "Institucion")
+                      : "ISTER"}
+                  </p>
+                </div>
+                <span className="text-5xl" aria-hidden="true">
+                  {cert.isRevoked ? "✗" : "✓"}
+                </span>
+              </div>
             </div>
 
-            {/* Certificate data */}
+            {/* Detalles Academicos */}
             <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-1">
-                {getAttribute(cert.metadata, "Microcredencial") !== "—"
-                  ? getAttribute(cert.metadata, "Microcredencial")
-                  : `Certificado #${cert.tokenId}`}
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                Detalles Academicos
               </h2>
-              <p className="text-sm text-gray-500 font-mono mb-4">
-                {getAttribute(cert.metadata, "Course ID")}
-              </p>
 
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <div>
@@ -126,7 +152,7 @@ export default async function VerifyTokenPage({
               )}
             </div>
 
-            {/* Blockchain proof */}
+            {/* Prueba Blockchain */}
             <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
               <h3 className="font-semibold text-gray-800 mb-3">Prueba Blockchain</h3>
               <dl className="space-y-2 text-sm">
@@ -135,22 +161,18 @@ export default async function VerifyTokenPage({
                   <dd className="font-mono font-bold">#{cert.tokenId}</dd>
                 </div>
                 <div className="flex gap-2">
-                  <dt className="text-gray-500 shrink-0 w-32">Propietario</dt>
-                  <dd className="font-mono text-xs truncate">{cert.owner}</dd>
-                </div>
-                <div className="flex gap-2">
                   <dt className="text-gray-500 shrink-0 w-32">Red</dt>
-                  <dd>Sepolia</dd>
+                  <dd>Sepolia Testnet</dd>
                 </div>
                 {CONTRACT_ADDRESS && (
                   <div className="flex gap-2">
                     <dt className="text-gray-500 shrink-0 w-32">Contrato</dt>
                     <dd>
                       <a
-                        href={`https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}`}
+                        href={`${EXPLORER_BASE}/address/${CONTRACT_ADDRESS}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-mono text-xs text-brand-600 hover:underline truncate block"
+                        className="font-mono text-xs text-brand-600 hover:underline"
                       >
                         {CONTRACT_ADDRESS.slice(0, 10)}...{CONTRACT_ADDRESS.slice(-6)}
                       </a>
@@ -175,43 +197,37 @@ export default async function VerifyTokenPage({
               </dl>
             </div>
 
-            {/* Evidence section */}
+            {/* Evidencias */}
             {Array.isArray((cert.metadata as Record<string, unknown> | null)?.evidence) &&
               ((cert.metadata as { evidence: EvidenceItem[] }).evidence).length > 0 && (
               <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-800 mb-3">Evidencias</h3>
-                <ul className="space-y-3">
-                  {((cert.metadata as { evidence: EvidenceItem[] }).evidence).map((ev, i) => (
-                    <li key={i} className="flex items-center justify-between gap-4 text-sm">
-                      <div className="flex items-center gap-3">
-                        <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">
-                          {ev.type}
-                        </span>
-                        <span className="text-gray-700">{ev.title}</span>
-                        {ev.hash && (
-                          <span
-                            className="text-xs text-gray-400 font-mono hidden sm:block"
-                            title={`SHA-256: ${ev.hash}`}
-                          >
-                            SHA-256: {ev.hash.slice(0, 12)}...
-                          </span>
-                        )}
-                      </div>
-                      {ev.url && ev.url.startsWith("ipfs://") && (
-                        <a
-                          href={ipfsToHttp(ev.url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-brand-600 hover:underline shrink-0"
-                        >
-                          Descargar
-                        </a>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                <EvidenceList
+                  evidence={
+                    (cert.metadata as { evidence: EvidenceItem[] }).evidence.map((ev) => ({
+                      type: ev.type?.toLowerCase() === "pdf" || ev.type?.toLowerCase() === "documento"
+                        ? "document"
+                        : ev.type?.toLowerCase() === "imagen" || ev.type?.toLowerCase() === "image"
+                        ? "image"
+                        : ev.type?.toLowerCase() === "video"
+                        ? "video"
+                        : "link",
+                      title: ev.title,
+                      url: ev.url,
+                      hash: ev.hash,
+                    }))
+                  }
+                />
               </div>
             )}
+
+            {/* QR Code */}
+            <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-800 mb-3">Codigo QR de Verificacion</h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Escanea para verificar la autenticidad de este certificado
+              </p>
+              <QRCodeSection url={verifyUrl} tokenId={params.tokenId} />
+            </div>
 
           </div>
         )}

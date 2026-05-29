@@ -4,7 +4,7 @@ import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "EduCert — Certificados NFT",
-  description: "Certificados educacionais como NFTs soulbound na Sepolia",
+  description: "Microcredenciales educativas como NFTs soulbound en blockchain",
   manifest: "/manifest.json",
 };
 
@@ -12,7 +12,7 @@ export const viewport: Viewport = { themeColor: "#2563eb" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="es">
       <body className="bg-gray-50 text-gray-900 min-h-screen">
         <Providers>{children}</Providers>
       </body>

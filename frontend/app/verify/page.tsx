@@ -17,7 +17,7 @@ export default function VerifyPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-6">
       <div className="max-w-md w-full">
         <Link href="/" className="text-sm text-brand-600 hover:underline mb-4 block">
-          ← Início
+          Inicio
         </Link>
 
         <div className="bg-white rounded-xl shadow border border-gray-200 p-8">
@@ -25,7 +25,7 @@ export default function VerifyPage() {
             <div className="text-4xl mb-2">🔍</div>
             <h1 className="text-2xl font-bold text-gray-800">Verificar Certificado</h1>
             <p className="text-sm text-gray-500 mt-1">
-              Informe o Token ID para verificar a autenticidade
+              Introduce el Token ID para verificar la autenticidad
             </p>
           </div>
 
@@ -33,7 +33,7 @@ export default function VerifyPage() {
             <input
               type="number"
               min="1"
-              placeholder="Token ID (ex: 42)"
+              placeholder="Token ID (ej: 42)"
               value={tokenId}
               onChange={(e) => setTokenId(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-brand-500"

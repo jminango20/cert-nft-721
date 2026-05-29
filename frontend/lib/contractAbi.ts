@@ -27,4 +27,14 @@ export const CERTIFICATE_NFT_ABI = [
     inputs: [{ name: "tokenId", type: "uint256" }],
     outputs: [{ name: "", type: "bool" }],
   },
+  {
+    name: "revoke",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [],
+  },
 ] as const;
+
+/** Alias used by CertDashboard */
+export const contractAbi = CERTIFICATE_NFT_ABI;

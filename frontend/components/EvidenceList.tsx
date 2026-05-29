@@ -122,24 +122,24 @@ function typeLabel(type: EvidenceItem["type"]) {
     case "document":
       return "Documento";
     case "image":
-      return "Imagem";
+      return "Imagen";
     case "video":
-      return "Vídeo";
+      return "Video";
     default:
-      return "Link";
+      return "Enlace";
   }
 }
 
 function openLabel(type: EvidenceItem["type"]) {
   switch (type) {
     case "document":
-      return "Baixar PDF";
+      return "Descargar PDF";
     case "image":
-      return "Ver imagem";
+      return "Ver imagen";
     case "video":
-      return "Assistir";
+      return "Ver video";
     default:
-      return "Abrir link";
+      return "Abrir enlace";
   }
 }
 
@@ -158,7 +158,7 @@ async function verifyIntegrity(
 
   const res = await fetch(resolvedUrl);
   if (!res.ok) {
-    throw new Error(`Falha ao buscar arquivo (${res.status})`);
+    throw new Error(`Error al obtener el archivo (${res.status})`);
   }
 
   const buffer = await res.arrayBuffer();
@@ -170,8 +170,8 @@ async function verifyIntegrity(
   return {
     ok,
     message: ok
-      ? `Hash confere: ${computed.slice(0, 18)}…`
-      : `Hash diverge.\nEsperado: ${normalised.slice(0, 18)}…\nCalculado: ${computed.slice(0, 18)}…`,
+      ? `Hash verificado: ${computed.slice(0, 18)}…`
+      : `Hash no coincide.\nEsperado: ${normalised.slice(0, 18)}…\nCalculado: ${computed.slice(0, 18)}…`,
   };
 }
 
@@ -198,7 +198,7 @@ function EvidenceCard({ item }: { item: EvidenceItem }) {
     } catch (err) {
       setIntegrity({
         status: "error",
-        message: err instanceof Error ? err.message : "Erro desconhecido",
+        message: err instanceof Error ? err.message : "Error desconocido",
       });
     }
   }
@@ -274,10 +274,10 @@ function EvidenceCard({ item }: { item: EvidenceItem }) {
                     d="M4 12a8 8 0 018-8v8H4z"
                   />
                 </svg>
-                Verificando…
+                Verificando...
               </>
             ) : (
-              "Verificar integridade"
+              "Verificar integridad"
             )}
           </button>
         )}
@@ -319,7 +319,7 @@ export default function EvidenceList({ evidence }: EvidenceListProps) {
         id="evidence-heading"
         className="text-base font-semibold text-gray-700 mb-3"
       >
-        Evidencias ({evidence.length})
+        Evidencias adjuntas ({evidence.length})
       </h2>
       <div className="grid gap-3 sm:grid-cols-2">
         {evidence.map((item, idx) => (
