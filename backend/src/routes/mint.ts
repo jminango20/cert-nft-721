@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import multer from "multer";
-import { createHash } from "crypto";
+import { keccak256 } from "ethers";
 import { v4 as uuidv4 } from "uuid";
 import rateLimit from "express-rate-limit";
 import { requireApiKey } from "../middleware/auth";
@@ -121,7 +121,7 @@ router.post(
         const file = files[i];
         const title = evidenceTitles[i] ?? file.originalname;
         const type = evidenceTypes[i] ?? (file.mimetype === "application/pdf" ? "PDF" : "Imagen");
-        const fileHash = createHash("sha256").update(file.buffer).digest("hex");
+        const fileHash = keccak256(file.buffer);
 
         const uploaded = await uploadBufferToIPFS(file.buffer, file.originalname, file.mimetype);
 
@@ -181,6 +181,8 @@ router.post(
           learningOutcomes: learningOutcomes ?? "",
           evidences: resolvedEvidences,
           ipfsCid,
+          walletAddress: null,
+          claimed: false,
           expiresAt: makeExpiry(),
           createdAt: Date.now(),
         };

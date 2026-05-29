@@ -1,5 +1,21 @@
 # Backend — DONE
 
+## Semana 2 — Multer, keccak256, claimed flag
+
+### Alterações
+- `routes/mint.ts`: hash de evidências migrado de `sha256` (Node crypto) para `keccak256` (ethers v6) — alinhado com padrão Ethereum
+- `types/index.ts`: `ClaimRecord` ganha campos explícitos `walletAddress: string | null` e `claimed: boolean`
+- `routes/mint.ts`: `ClaimRecord` criado com `walletAddress: null, claimed: false` explícitos
+- `services/claims.ts`: `associateWallet` define `claimed = true` ao associar carteira
+- `routes/claim.ts`: GET usa `record.claimed` em vez de `!!record.walletAddress`; POST verifica `record.claimed || record.walletAddress`
+
+### Regras respeitadas
+- Dados pessoais NUNCA on-chain nem IPFS
+- TypeScript compila sem erros (`tsc --noEmit`)
+- 20 testes Vitest passam
+
+---
+
 ## Semana 1 — Upload de evidências + claim-by-email + Resend
 
 ### Novos endpoints

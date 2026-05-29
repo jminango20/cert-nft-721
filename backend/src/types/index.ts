@@ -61,7 +61,8 @@ export interface ClaimRecord {
   learningOutcomes: string;
   evidences: EvidenceItem[];
   ipfsCid?: string;
-  walletAddress?: string;
+  walletAddress: string | null;
+  claimed: boolean;
   tokenId?: string;
   txHash?: string;
   expiresAt: number;

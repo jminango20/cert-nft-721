@@ -31,7 +31,7 @@ router.get("/:token", async (req: Request, res: Response): Promise<void> => {
     learningOutcomes: record.learningOutcomes,
     evidences: record.evidences,
     ipfsCid: record.ipfsCid,
-    alreadyClaimed: !!record.walletAddress,
+    alreadyClaimed: record.claimed,
     tokenId: record.tokenId,
   });
 });
@@ -62,7 +62,7 @@ router.post("/:token", async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  if (record.walletAddress) {
+  if (record.claimed || record.walletAddress) {
     res.status(409).json({ error: "Certificate already claimed", tokenId: record.tokenId });
     return;
   }

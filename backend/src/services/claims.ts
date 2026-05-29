@@ -38,6 +38,7 @@ export function associateWallet(token: string, walletAddress: string, tokenId?: 
   if (!record) return null;
   if (Date.now() > record.expiresAt) return null;
   record.walletAddress = walletAddress;
+  record.claimed = true;
   if (tokenId) record.tokenId = tokenId;
   if (txHash) record.txHash = txHash;
   all[token] = record;
