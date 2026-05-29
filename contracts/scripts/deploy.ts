@@ -9,7 +9,15 @@ async function main() {
 
   // The deployer receives ADMIN_ROLE and ISSUER_ROLE by default.
   // Pass a multisig address here in production.
-  const adminAddress = process.env.ADMIN_ADDRESS ?? deployer.address;
+  //
+  // ethers v6 calls provider.resolveName() on address-typed constructor args to
+  // support ENS names. HardhatEthersProvider does not implement resolveName(),
+  // so passing a plain string (even a valid hex address) throws
+  // NotImplementedError. Wrapping with ethers.getAddress() validates and
+  // checksums the address, producing a value ethers treats as already resolved,
+  // which skips the ENS lookup entirely.
+  const rawAdmin = process.env.ADMIN_ADDRESS ?? deployer.address;
+  const adminAddress = ethers.getAddress(rawAdmin);
   const collectionName   = process.env.NFT_NAME   ?? "EduCert Certificate";
   const collectionSymbol = process.env.NFT_SYMBOL ?? "EDUCERT";
 
