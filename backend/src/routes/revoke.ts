@@ -7,7 +7,14 @@ import { revokeCertificate } from "../services/blockchain";
 const router = Router();
 
 const RevokeSchema = z.object({
-  tokenId: z.number().int().positive(),
+  tokenId: z
+    .union([
+      z.number().int().positive(),
+      z.string().regex(/^\d+$/).transform(Number),
+    ])
+    .refine((n) => Number.isInteger(n) && n > 0, {
+      message: "tokenId must be a positive integer",
+    }),
 });
 
 router.post("/", requireApiKey, validate(RevokeSchema), async (req, res) => {
