@@ -3,9 +3,9 @@ import { z } from "zod";
 import rateLimit from "express-rate-limit";
 import { validate } from "../middleware/validate";
 import { requireApiKey } from "../middleware/auth";
-import { uploadMetadata } from "../services/ipfs";
+import { uploadMetadata, uploadEvidenceFile } from "../services/ipfs";
 import { mintCertificate } from "../services/blockchain";
-import { CertificateMetadata } from "../types";
+import { CertificateMetadata, EvidenceItem } from "../types";
 
 const router = Router();
 
@@ -16,17 +16,45 @@ const mintLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const EvidenceItemSchema = z.object({
+  type: z.string().min(1),
+  title: z.string().min(1),
+  url: z.string().url(),
+  hash: z.string().optional(),
+  mimeType: z.string().optional(),
+});
+
 const MintSchema = z.object({
   studentWallet: z.string().regex(/^0x[0-9a-fA-F]{40}$/, "Invalid wallet address"),
   courseName: z.string().min(1).max(200),
   studentIdHash: z.string().min(1),
   issuedAt: z.string().datetime(),
   courseId: z.string().min(1).max(100),
+  evidence: z.array(EvidenceItemSchema).optional(),
 });
 
 router.post("/", mintLimiter, requireApiKey, validate(MintSchema), async (req, res) => {
   try {
-    const { studentWallet, courseName, studentIdHash, issuedAt, courseId } = req.body;
+    const { studentWallet, courseName, studentIdHash, issuedAt, courseId, evidence } = req.body as {
+      studentWallet: string;
+      courseName: string;
+      studentIdHash: string;
+      issuedAt: string;
+      courseId: string;
+      evidence?: EvidenceItem[];
+    };
+
+    // Upload each evidence file to IPFS. Failures are non-fatal: the original
+    // URL is kept as a fallback so the mint is not aborted.
+    let resolvedEvidence: EvidenceItem[] | undefined;
+    if (evidence && evidence.length > 0) {
+      resolvedEvidence = await Promise.all(
+        evidence.map(async (item) => {
+          const ipfsUrl = await uploadEvidenceFile(item.url, item.title);
+          return ipfsUrl ? { ...item, url: ipfsUrl } : item;
+        })
+      );
+    }
 
     const metadata: CertificateMetadata = {
       name: `EduCert — ${courseName}`,
@@ -40,6 +68,7 @@ router.post("/", mintLimiter, requireApiKey, validate(MintSchema), async (req, r
         { trait_type: "Rede", value: "Polygon Amoy" },
         { trait_type: "Tipo", value: "Soulbound" },
       ],
+      ...(resolvedEvidence && resolvedEvidence.length > 0 ? { evidence: resolvedEvidence } : {}),
     };
 
     const ipfsUri = await uploadMetadata(metadata);

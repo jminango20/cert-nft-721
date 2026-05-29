@@ -30,9 +30,18 @@ export interface CertificateInfo {
   metadata: Record<string, unknown> | null;
 }
 
+export interface EvidenceItem {
+  type: string;
+  title: string;
+  url: string;
+  hash?: string;
+  mimeType?: string;
+}
+
 export interface CertificateMetadata {
   name: string;
   description: string;
   image: string;
   attributes: Array<{ trait_type: string; value: string }>;
+  evidence?: EvidenceItem[];
 }
