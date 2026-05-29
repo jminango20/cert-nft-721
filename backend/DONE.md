@@ -58,6 +58,10 @@ Comportamento:
 | `API_KEY` | Chave para autenticar rotas de escrita (x-api-key) |
 | `FRONTEND_URL` | Origem permitida pelo CORS (ex: http://localhost:3000) |
 
+### Correções aplicadas
+
+- **verify.ts** — adicionada função `ipfsToHttp` (module-level, não exportada) que converte `ipfs://` para `https://gateway.pinata.cloud/ipfs/`. O fetch de metadata agora usa essa função em vez da conversão inline anterior, resolvendo falhas silenciosas quando o tokenURI usava o protocolo `ipfs://`.
+
 ### Como rodar
 
 ```bash

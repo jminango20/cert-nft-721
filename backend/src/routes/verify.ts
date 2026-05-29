@@ -1,6 +1,13 @@
 import { Router } from "express";
 import { getCertificateInfo } from "../services/blockchain";
 
+function ipfsToHttp(uri: string): string {
+  if (uri.startsWith("ipfs://")) {
+    return uri.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
+  }
+  return uri;
+}
+
 const router = Router();
 
 router.get("/:tokenId", async (req, res) => {
@@ -13,9 +20,8 @@ router.get("/:tokenId", async (req, res) => {
 
     const info = await getCertificateInfo(tokenId);
 
-    if (info.tokenURI && info.tokenURI.startsWith("ipfs://")) {
-      const cid = info.tokenURI.replace("ipfs://", "");
-      const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${cid}`;
+    if (info.tokenURI) {
+      const gatewayUrl = ipfsToHttp(info.tokenURI);
       try {
         const metaRes = await fetch(gatewayUrl, { signal: AbortSignal.timeout(5000) });
         if (metaRes.ok) {
