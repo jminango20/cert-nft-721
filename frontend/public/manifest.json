@@ -1,7 +1,7 @@
 {
   "name": "EduCert — Certificados NFT",
   "short_name": "EduCert",
-  "description": "Certificados educacionais como NFTs soulbound na Polygon Amoy",
+  "description": "Certificados educacionais como NFTs soulbound na Sepolia",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f9fafb",

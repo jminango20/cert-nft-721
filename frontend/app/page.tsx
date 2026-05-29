@@ -6,7 +6,7 @@ export default function Home() {
       <div className="max-w-2xl w-full text-center">
         <h1 className="text-4xl font-bold text-brand-700 mb-3">EduCert</h1>
         <p className="text-gray-600 mb-10 text-lg">
-          Certificados educacionais como NFTs soulbound na rede Polygon Amoy
+          Certificados educacionais como NFTs soulbound na rede Sepolia
         </p>
 
         <div className="grid gap-4 sm:grid-cols-3">

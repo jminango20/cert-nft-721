@@ -4,7 +4,7 @@ import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "EduCert — Certificados NFT",
-  description: "Certificados educacionais como NFTs soulbound na Polygon Amoy",
+  description: "Certificados educacionais como NFTs soulbound na Sepolia",
   manifest: "/manifest.json",
   themeColor: "#2563eb",
   viewport: "width=device-width, initial-scale=1",

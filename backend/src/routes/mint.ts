@@ -65,7 +65,7 @@ router.post("/", mintLimiter, requireApiKey, validate(MintSchema), async (req, r
         { trait_type: "Course ID", value: courseId },
         { trait_type: "Student ID (hashed)", value: studentIdHash },
         { trait_type: "Emitido em", value: issuedAt },
-        { trait_type: "Rede", value: "Polygon Amoy" },
+        { trait_type: "Rede", value: "Sepolia" },
         { trait_type: "Tipo", value: "Soulbound" },
       ],
       ...(resolvedEvidence && resolvedEvidence.length > 0 ? { evidence: resolvedEvidence } : {}),
