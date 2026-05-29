@@ -4,7 +4,7 @@
 
 API Express/TypeScript para o EduCert.
 
-### Endpoints
+### Endpoints implementados
 
 | Método | Rota | Auth | Descrição |
 |--------|------|------|-----------|
@@ -17,7 +17,8 @@ API Express/TypeScript para o EduCert.
 ### Serviços
 
 - **blockchain.ts** — ethers v6, minimal ABI, signer via PRIVATE_KEY
-- **ipfs.ts** — @pinata/sdk, `pinJSONToIPFS` para metadata, `pinFileToIPFS` para evidências
+- **ipfs.ts** — Pinata SDK v2 (`pinata` npm package), `upload.public.json()` para metadata, `upload.public.file()` para evidências
+- **mint.ts** — rota com rate-limit, validação Zod, suporte a `evidence[]`, log de erro estruturado
 
 ### Campo `evidence[]` no POST /api/mint
 
@@ -32,7 +33,7 @@ O body aceita um campo opcional `evidence`, array de objetos com:
 | `mimeType` | string | não | MIME type do arquivo |
 
 Comportamento:
-- Cada item em `evidence[]` tem seu arquivo buscado via `fetch` e enviado ao Pinata via `pinFileToIPFS`.
+- Cada item em `evidence[]` tem seu arquivo buscado via `fetch` e enviado ao Pinata via `upload.public.file()`.
 - A `url` de cada item é substituída pelo `ipfs://` CID retornado.
 - Se o upload de uma evidência falhar, o erro é logado mas o mint continua com a `url` original como fallback.
 - O array `evidence` (com URLs já no IPFS) é incluído no JSON de metadado final antes do upload do JSON.
@@ -50,9 +51,8 @@ Comportamento:
 | Variável | Descrição |
 |----------|-----------|
 | `PORT` | Porta do servidor (padrão: 3001) |
-| `PINATA_API_KEY` | Chave de API da Pinata |
-| `PINATA_SECRET_KEY` | Chave secreta da Pinata |
-| `RPC_URL` | URL do nó RPC (ex: Polygon Amoy) |
+| `PINATA_JWT` | JWT de autenticação da Pinata (SDK `pinata` v2+) |
+| `RPC_URL` | URL do nó RPC (ex: Sepolia) |
 | `PRIVATE_KEY` | Chave privada da carteira issuer |
 | `CONTRACT_ADDRESS` | Endereço do contrato EduCert deployado |
 | `API_KEY` | Chave para autenticar rotas de escrita (x-api-key) |

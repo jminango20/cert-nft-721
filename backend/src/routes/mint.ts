@@ -77,6 +77,7 @@ router.post("/", mintLimiter, requireApiKey, validate(MintSchema), async (req, r
 
     res.status(201).json({ tokenId, txHash, ipfsCid });
   } catch (err: unknown) {
+    console.error("[mint error]", err);
     const message = err instanceof Error ? err.message : "Mint failed";
     res.status(500).json({ error: message });
   }

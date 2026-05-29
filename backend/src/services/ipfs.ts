@@ -1,22 +1,20 @@
-import { Readable } from "stream";
-import PinataClient from "@pinata/sdk";
+import { PinataSDK } from "pinata";
 import { CertificateMetadata } from "../types";
 
-function getClient(): PinataClient {
-  const apiKey = process.env.PINATA_API_KEY;
-  const secretKey = process.env.PINATA_SECRET_KEY;
-  if (!apiKey || !secretKey) throw new Error("Pinata credentials not set");
-  return new PinataClient(apiKey, secretKey);
+function getClient(): PinataSDK {
+  const jwt = process.env.PINATA_JWT;
+  if (!jwt) throw new Error("PINATA_JWT not set");
+  return new PinataSDK({ pinataJwt: jwt });
 }
 
 export async function uploadMetadata(
   metadata: CertificateMetadata
 ): Promise<string> {
   const pinata = getClient();
-  const result = await pinata.pinJSONToIPFS(metadata, {
-    pinataMetadata: { name: `educert-${Date.now()}` },
-  });
-  return `ipfs://${result.IpfsHash}`;
+  const result = await pinata.upload.public
+    .json(metadata)
+    .name(`educert-${Date.now()}`);
+  return `ipfs://${result.cid}`;
 }
 
 /**
@@ -37,18 +35,16 @@ export async function uploadEvidenceFile(
 
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const readable = Readable.from(buffer);
+    const safeName = title.replace(/[^a-zA-Z0-9._-]/g, "_") || "evidence";
+    const contentType =
+      response.headers.get("content-type") ?? "application/octet-stream";
 
-    // pinFileToIPFS requires the stream to have a `path` property so Pinata
-    // can derive the filename used in the multipart upload.
-    (readable as unknown as { path: string }).path =
-      title.replace(/[^a-zA-Z0-9._-]/g, "_") || "evidence";
+    const file = new File([buffer], safeName, { type: contentType });
+    const result = await pinata.upload.public
+      .file(file)
+      .name(`educert-evidence-${Date.now()}-${title}`);
 
-    const result = await pinata.pinFileToIPFS(readable, {
-      pinataMetadata: { name: `educert-evidence-${Date.now()}-${title}` },
-    });
-
-    return `ipfs://${result.IpfsHash}`;
+    return `ipfs://${result.cid}`;
   } catch (err) {
     console.error(`[ipfs] uploadEvidenceFile failed for "${url}":`, err);
     return null;
