@@ -115,14 +115,14 @@ export default async function VerifyTokenPage({
                 <div>
                   <dt className="text-gray-500 text-xs">Fecha de emision</dt>
                   <dd className="font-medium">
-                    {getAttribute(cert.metadata, "Fecha de emision") !== "—"
-                      ? new Date(getAttribute(cert.metadata, "Fecha de emision")).toLocaleDateString("es-ES")
+                    {getAttribute(cert.metadata, "Fecha de emisión") !== "—"
+                      ? new Date(getAttribute(cert.metadata, "Fecha de emisión")).toLocaleDateString("es-ES")
                       : "—"}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Creditos ECTS</dt>
-                  <dd className="font-medium">{getAttribute(cert.metadata, "Creditos ECTS")}</dd>
+                  <dd className="font-medium">{getAttribute(cert.metadata, "Créditos ECTS")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Nivel EQF</dt>
@@ -134,7 +134,7 @@ export default async function VerifyTokenPage({
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Tipo de Evaluacion</dt>
-                  <dd className="font-medium">{getAttribute(cert.metadata, "Tipo de Evaluacion")}</dd>
+                  <dd className="font-medium">{getAttribute(cert.metadata, "Tipo de Evaluación")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Soulbound</dt>
