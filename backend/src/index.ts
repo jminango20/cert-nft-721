@@ -8,6 +8,7 @@ import revokeRouter from "./routes/revoke";
 import verifyRouter from "./routes/verify";
 import metadataRouter from "./routes/metadata";
 import claimRouter from "./routes/claim";
+import certificatesRouter from "./routes/certificates";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use("/api/revoke", revokeRouter);
 app.use("/api/verify", verifyRouter);
 app.use("/api/metadata", metadataRouter);
 app.use("/api/claim", claimRouter);
+app.use("/api/certificates", certificatesRouter);
 
 app.use((_req, res) => res.status(404).json({ error: "Not found" }));
 

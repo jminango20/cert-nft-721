@@ -70,6 +70,13 @@ export interface EvidenceItem {
   mimeType?: string;
 }
 
+export interface OwnedCertificate {
+  tokenId: string;
+  metadata: Record<string, unknown> | null;
+  isRevoked: boolean;
+  txHash: string | null;
+}
+
 export const api = {
   // Calls the local Next.js route handler — API key stays server-side only.
   mint: (payload: MintPayload) => postLocal<MintResult>("/api/mint", payload),
@@ -79,4 +86,7 @@ export const api = {
   verify: (tokenId: string | number) => get<CertificateInfo>(`/api/verify/${tokenId}`),
   // Claim flow
   getClaim: (token: string) => get<ClaimPreview>(`/api/claim/${token}`),
+  // Wallet-based certificate listing
+  getCertificatesByOwner: (owner: string) =>
+    get<OwnedCertificate[]>(`/api/certificates?owner=${encodeURIComponent(owner)}`),
 };

@@ -3,7 +3,7 @@ import path from "path";
 
 const TX_FILE = path.resolve(process.cwd(), "tx-index.json");
 
-function readAll(): Record<string, string> {
+export function readAll(): Record<string, string> {
   if (!fs.existsSync(TX_FILE)) return {};
   try {
     return JSON.parse(fs.readFileSync(TX_FILE, "utf-8"));

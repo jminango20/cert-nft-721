@@ -1,6 +1,33 @@
 # Frontend — DONE
 
-## Sesion actual (2026-05-29) — Fix /verify: atributos con acento, evidencias PDF, layout
+## Sesion actual (2026-05-29) — Rediseno /aluno: auto-carga por wallet, sin campo Token ID
+
+### Cambios
+
+| Archivo | Tipo | Descripcion |
+|---------|------|-------------|
+| `app/aluno/page.tsx` | Actualizado | Reescrito: auto-carga certificados via `GET /api/certificates?owner=`, elimina campo de busca manual por Token ID |
+| `components/CertificateListCard.tsx` | Nuevo | Card con titulo, institucion, fecha en espanol, badge Valido/Revocado, ECTS, botones "Ver certificado completo", "Compartir" (copia URL al portapapeles) y "Codigo QR" (modal) |
+| `lib/api.ts` | Actualizado | Anadida interfaz `OwnedCertificate` y metodo `api.getCertificatesByOwner(owner)` |
+| `backend/src/routes/certificates.ts` | Nuevo | `GET /api/certificates?owner=0x...` — lee tx-index.json, filtra por `ownerOf`, devuelve metadata IPFS + isRevoked + txHash por cada token |
+| `backend/src/services/TxIndex.ts` | Actualizado | `readAll()` exportada como publica |
+| `backend/src/index.ts` | Actualizado | Registra `certificatesRouter` en `/api/certificates` |
+
+### Problemas resueltos
+
+1. **Token ID oculto** — el alumno ya no necesita conocer ni introducir ningun ID tecnico.
+2. **Campos vacios** — atributos leidos con `getAttribute` de `attributeHelper` (normalizacion NFD, busca por substring).
+3. **Fecha legible** — formateada con `toLocaleDateString("es-ES", { day, month: "long", year })`.
+4. **QR modal** — abre un dialogo centrado con `QRCodeSVG` apuntando a `/verify/[tokenId]`.
+5. **Compartir** — copia `{origin}/verify/{tokenId}` al portapapeles con feedback visual.
+
+### Dependencias anadidas
+
+Ninguna nueva — `qrcode.react` ya estaba instalado.
+
+---
+
+## Sesion anterior (2026-05-29) — Fix /verify: atributos con acento, evidencias PDF, layout
 
 ### Cambios
 
