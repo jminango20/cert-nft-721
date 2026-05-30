@@ -1,6 +1,24 @@
 # Frontend — DONE
 
-## Sesion actual (2026-05-29) — Rediseno completo UI en espanol
+## Sesion actual (2026-05-29) — Fix /verify: atributos con acento, evidencias PDF, layout
+
+### Cambios
+
+| Archivo | Tipo | Descripcion |
+|---------|------|-------------|
+| `lib/attributeHelper.ts` | Nuevo | Funcion `getAttribute` con normalizacion NFD, busca traits por substring sin importar acentos |
+| `app/verify/[tokenId]/page.tsx` | Actualizado | Usa `getAttribute` de `attributeHelper`; orden de secciones corregido (Estado → Detalles → Evidencias → Blockchain → QR); fecha con mes largo en el header del estado |
+| `components/EvidenceList.tsx` | Actualizado | PDF muestra boton "Ver PDF" (target=_blank) + boton "Descargar" (con `download`); thumbnail de imagen 80x80px fijo |
+
+### Problemas resueltos
+
+1. **Atributos vacios** — `getAttribute` normaliza Unicode NFD y elimina diacriticos antes de comparar; "Fecha de emision", "Creditos ECTS", "Tipo de Evaluacion" ahora se encuentran aunque el metadato use "Fecha de emisión", "Créditos ECTS", "Tipo de Evaluación".
+2. **PDF y evidencias** — URLs `ipfs://` ya se resolvian a Pinata gateway; ahora PDFs tienen dos botones separados: "Ver PDF" abre en nueva pestana y "Descargar" usa `download` attribute. Imagenes muestran thumbnail 80x80.
+3. **Layout** — Orden de secciones alineado con el diseno: Estado → Detalles Academicos → Evidencias → Prueba Blockchain → QR. TX hash aparece antes de la direccion del contrato en la seccion blockchain.
+
+---
+
+## Sesion anterior (2026-05-29) — Rediseno completo UI en espanol
 
 ### Paginas actualizadas / creadas
 

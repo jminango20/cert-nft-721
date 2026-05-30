@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CertificateInfo } from "@/lib/api";
 import QRCodeSection from "@/components/QRCodeSection";
 import EvidenceList from "@/components/EvidenceList";
+import { getAttribute } from "@/lib/attributeHelper";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "";
@@ -16,6 +17,11 @@ interface EvidenceItem {
   mimeType?: string;
 }
 
+interface Attribute {
+  trait_type: string;
+  value: string;
+}
+
 async function getCert(tokenId: string): Promise<CertificateInfo | null> {
   try {
     const res = await fetch(`${BACKEND_URL}/api/verify/${tokenId}`, {
@@ -28,32 +34,16 @@ async function getCert(tokenId: string): Promise<CertificateInfo | null> {
   }
 }
 
-interface Attribute {
-  trait_type: string;
-  value: string;
-}
-
-function normalizeStr(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
-}
-
-function getAttribute(metadata: Record<string, unknown> | null, search: string): string {
-  if (!metadata) return "—";
-  const attrs = metadata.attributes as Attribute[] | undefined;
-  return (
-    attrs?.find((a) => normalizeStr(a.trait_type).includes(normalizeStr(search)))
-      ?.value ?? "—"
-  );
-}
-
 function ipfsToHttp(uri: string): string {
   if (uri.startsWith("ipfs://")) {
     return `https://gateway.pinata.cloud/ipfs/${uri.replace("ipfs://", "")}`;
   }
   return uri;
+}
+
+function getAttrs(metadata: Record<string, unknown> | null): Attribute[] {
+  if (!metadata) return [];
+  return (metadata.attributes as Attribute[] | undefined) ?? [];
 }
 
 export default async function VerifyTokenPage({
@@ -68,7 +58,7 @@ export default async function VerifyTokenPage({
     <div className="min-h-screen flex flex-col items-center p-6 bg-gray-50">
       <div className="max-w-2xl w-full space-y-4 py-6">
         <Link href="/verify" className="text-sm text-brand-600 hover:underline block">
-          Verificar otro certificado
+          Verificar outro certificado
         </Link>
 
         {!cert ? (
@@ -83,7 +73,7 @@ export default async function VerifyTokenPage({
         ) : (
           <div className="space-y-4">
 
-            {/* Estado del Certificado */}
+            {/* ── 1. Estado del Certificado ── */}
             <div
               className={`rounded-xl p-5 border ${
                 cert.isRevoked
@@ -99,19 +89,25 @@ export default async function VerifyTokenPage({
                   <p className="text-2xl font-bold">
                     {cert.isRevoked ? "Revocado" : "Valido"}
                   </p>
-                  {getAttribute(cert.metadata, "participante") !== "—" && (
-                    <p className="text-base mt-1 opacity-90">
-                      {getAttribute(cert.metadata, "participante")}
-                    </p>
-                  )}
-                  <p className="text-sm opacity-80 mt-0.5">
-                    {getAttribute(cert.metadata, "microcredencial") !== "—"
-                      ? getAttribute(cert.metadata, "microcredencial")
+                  <p className="text-base mt-1 opacity-90 font-medium">
+                    {getAttribute(getAttrs(cert.metadata), "microcredencial") !== "—"
+                      ? getAttribute(getAttrs(cert.metadata), "microcredencial")
                       : `Certificado #${cert.tokenId}`}
-                    {" — "}
-                    {getAttribute(cert.metadata, "institucion") !== "—"
-                      ? getAttribute(cert.metadata, "institucion")
+                  </p>
+                  <p className="text-sm opacity-80 mt-0.5">
+                    {getAttribute(getAttrs(cert.metadata), "institucion") !== "—"
+                      ? getAttribute(getAttrs(cert.metadata), "institucion")
                       : "ISTER"}
+                    {getAttribute(getAttrs(cert.metadata), "fecha") !== "—" && (
+                      <>
+                        {" · "}
+                        {new Date(getAttribute(getAttrs(cert.metadata), "fecha")).toLocaleDateString("es-ES", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </>
+                    )}
                   </p>
                 </div>
                 <span className="text-5xl" aria-hidden="true">
@@ -120,7 +116,7 @@ export default async function VerifyTokenPage({
               </div>
             </div>
 
-            {/* Detalles Academicos */}
+            {/* ── 2. Detalles Academicos ── */}
             <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">
                 Detalles Academicos
@@ -130,26 +126,26 @@ export default async function VerifyTokenPage({
                 <div>
                   <dt className="text-gray-500 text-xs">Fecha de emision</dt>
                   <dd className="font-medium">
-                    {getAttribute(cert.metadata, "fecha") !== "—"
-                      ? new Date(getAttribute(cert.metadata, "fecha")).toLocaleDateString("es-ES")
+                    {getAttribute(getAttrs(cert.metadata), "fecha") !== "—"
+                      ? new Date(getAttribute(getAttrs(cert.metadata), "fecha")).toLocaleDateString("es-ES")
                       : "—"}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Creditos ECTS</dt>
-                  <dd className="font-medium">{getAttribute(cert.metadata, "ects")}</dd>
+                  <dd className="font-medium">{getAttribute(getAttrs(cert.metadata), "ects")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Nivel EQF</dt>
-                  <dd className="font-medium">{getAttribute(cert.metadata, "eqf")}</dd>
+                  <dd className="font-medium">{getAttribute(getAttrs(cert.metadata), "eqf")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Modalidad</dt>
-                  <dd className="font-medium">{getAttribute(cert.metadata, "modalidad")}</dd>
+                  <dd className="font-medium">{getAttribute(getAttrs(cert.metadata), "modalidad")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Tipo de Evaluacion</dt>
-                  <dd className="font-medium">{getAttribute(cert.metadata, "evaluac")}</dd>
+                  <dd className="font-medium">{getAttribute(getAttrs(cert.metadata), "evaluac")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Soulbound</dt>
@@ -157,17 +153,43 @@ export default async function VerifyTokenPage({
                 </div>
               </dl>
 
-              {getAttribute(cert.metadata, "aprendizaje") !== "—" && (
+              {getAttribute(getAttrs(cert.metadata), "aprendizaje") !== "—" && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <dt className="text-gray-500 text-xs mb-1">Resultados de Aprendizaje</dt>
                   <dd className="text-sm text-gray-700">
-                    {getAttribute(cert.metadata, "aprendizaje")}
+                    {getAttribute(getAttrs(cert.metadata), "aprendizaje")}
                   </dd>
                 </div>
               )}
             </div>
 
-            {/* Prueba Blockchain */}
+            {/* ── 3. Evidencias ── */}
+            {Array.isArray((cert.metadata as Record<string, unknown> | null)?.evidence) &&
+              ((cert.metadata as { evidence: EvidenceItem[] }).evidence).length > 0 && (
+              <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
+                <EvidenceList
+                  evidence={
+                    (cert.metadata as { evidence: EvidenceItem[] }).evidence.map((ev) => ({
+                      type:
+                        ev.type?.toLowerCase() === "pdf" ||
+                        ev.type?.toLowerCase() === "documento"
+                          ? "document"
+                          : ev.type?.toLowerCase() === "imagen" ||
+                            ev.type?.toLowerCase() === "image"
+                          ? "image"
+                          : ev.type?.toLowerCase() === "video"
+                          ? "video"
+                          : "link",
+                      title: ev.title,
+                      url: ev.url,
+                      hash: ev.hash,
+                    }))
+                  }
+                />
+              </div>
+            )}
+
+            {/* ── 4. Prueba Blockchain ── */}
             <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
               <h3 className="font-semibold text-gray-800 mb-3">Prueba Blockchain</h3>
               <dl className="space-y-2 text-sm">
@@ -179,21 +201,6 @@ export default async function VerifyTokenPage({
                   <dt className="text-gray-500 shrink-0 w-32">Red</dt>
                   <dd>Sepolia Testnet</dd>
                 </div>
-                {CONTRACT_ADDRESS && (
-                  <div className="flex gap-2">
-                    <dt className="text-gray-500 shrink-0 w-32">Contrato</dt>
-                    <dd>
-                      <a
-                        href={`${EXPLORER_BASE}/address/${CONTRACT_ADDRESS}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-mono text-xs text-brand-600 hover:underline"
-                      >
-                        {CONTRACT_ADDRESS.slice(0, 10)}...{CONTRACT_ADDRESS.slice(-6)}
-                      </a>
-                    </dd>
-                  </div>
-                )}
                 {cert.txHash && (
                   <div className="flex gap-2">
                     <dt className="text-gray-500 shrink-0 w-32">TX Hash</dt>
@@ -205,6 +212,21 @@ export default async function VerifyTokenPage({
                         className="font-mono text-xs text-brand-600 hover:underline"
                       >
                         {cert.txHash.slice(0, 10)}...{cert.txHash.slice(-6)}
+                      </a>
+                    </dd>
+                  </div>
+                )}
+                {CONTRACT_ADDRESS && (
+                  <div className="flex gap-2">
+                    <dt className="text-gray-500 shrink-0 w-32">Contrato</dt>
+                    <dd>
+                      <a
+                        href={`${EXPLORER_BASE}/address/${CONTRACT_ADDRESS}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-xs text-brand-600 hover:underline"
+                      >
+                        {CONTRACT_ADDRESS.slice(0, 10)}...{CONTRACT_ADDRESS.slice(-6)}
                       </a>
                     </dd>
                   </div>
@@ -227,30 +249,7 @@ export default async function VerifyTokenPage({
               </dl>
             </div>
 
-            {/* Evidencias */}
-            {Array.isArray((cert.metadata as Record<string, unknown> | null)?.evidence) &&
-              ((cert.metadata as { evidence: EvidenceItem[] }).evidence).length > 0 && (
-              <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
-                <EvidenceList
-                  evidence={
-                    (cert.metadata as { evidence: EvidenceItem[] }).evidence.map((ev) => ({
-                      type: ev.type?.toLowerCase() === "pdf" || ev.type?.toLowerCase() === "documento"
-                        ? "document"
-                        : ev.type?.toLowerCase() === "imagen" || ev.type?.toLowerCase() === "image"
-                        ? "image"
-                        : ev.type?.toLowerCase() === "video"
-                        ? "video"
-                        : "link",
-                      title: ev.title,
-                      url: ev.url,
-                      hash: ev.hash,
-                    }))
-                  }
-                />
-              </div>
-            )}
-
-            {/* QR Code */}
+            {/* ── 5. QR Code ── */}
             <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
               <h3 className="font-semibold text-gray-800 mb-3">Codigo QR de Verificacion</h3>
               <p className="text-xs text-gray-500 mb-4">

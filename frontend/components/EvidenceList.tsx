@@ -133,7 +133,7 @@ function typeLabel(type: EvidenceItem["type"]) {
 function openLabel(type: EvidenceItem["type"]) {
   switch (type) {
     case "document":
-      return "Descargar PDF";
+      return "Ver PDF";
     case "image":
       return "Ver imagen";
     case "video":
@@ -218,13 +218,16 @@ function EvidenceCard({ item }: { item: EvidenceItem }) {
         </div>
       </div>
 
-      {/* Inline image preview */}
+      {/* Inline image thumbnail 80x80 */}
       {item.type === "image" && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={resolvedUrl}
           alt={item.title}
-          className="w-full rounded-lg object-cover max-h-48"
+          width={80}
+          height={80}
+          className="rounded-lg object-cover"
+          style={{ width: 80, height: 80 }}
         />
       )}
 
@@ -253,6 +256,32 @@ function EvidenceCard({ item }: { item: EvidenceItem }) {
             <line x1="10" y1="14" x2="21" y2="3" />
           </svg>
         </a>
+
+        {/* PDF: extra Descargar button with download attribute */}
+        {item.type === "document" && (
+          <a
+            href={resolvedUrl}
+            download
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Descargar
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-3 w-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </a>
+        )}
 
         {item.hash && (
           <button
