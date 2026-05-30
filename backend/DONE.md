@@ -1,5 +1,22 @@
 # Backend — DONE
 
+## fix(verify): explicit fromBlock range in queryFilter to resolve txHash null
+
+### Root cause
+`contract.queryFilter(filter)` with no block range causes Infura/Alchemy on Sepolia
+to cap or reject the filter (providers limit results to ~10k blocks when no range is
+given). The call silently returned an empty array, leaving `txHash` as `null`.
+
+### Changes — `services/blockchain.ts`
+- `getCertificateInfo`: fetches `currentBlock` from the provider before the filter
+  call and sets `fromBlock = max(0, currentBlock - 100_000)`.
+- `queryFilter` now called with explicit `(filter, fromBlock, "latest")`.
+- Added `console.log("[verify] queryFilter events:", events.length)` for debugging.
+- Added a fallback comment: if events remain empty, `provider.getTransactionReceipt`
+  is the next option (requires the txHash stored off-chain, e.g. in the database).
+
+---
+
 ## VerifyService hardening — ipfs gateway, txHash, email silent-fail
 
 ### Changes
