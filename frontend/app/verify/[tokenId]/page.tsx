@@ -28,10 +28,25 @@ async function getCert(tokenId: string): Promise<CertificateInfo | null> {
   }
 }
 
-function getAttribute(metadata: Record<string, unknown> | null, trait: string): string {
+interface Attribute {
+  trait_type: string;
+  value: string;
+}
+
+function normalizeStr(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+}
+
+function getAttribute(metadata: Record<string, unknown> | null, search: string): string {
   if (!metadata) return "—";
-  const attrs = metadata.attributes as Array<{ trait_type: string; value: string }> | undefined;
-  return attrs?.find((a) => a.trait_type === trait)?.value ?? "—";
+  const attrs = metadata.attributes as Attribute[] | undefined;
+  return (
+    attrs?.find((a) => normalizeStr(a.trait_type).includes(normalizeStr(search)))
+      ?.value ?? "—"
+  );
 }
 
 function ipfsToHttp(uri: string): string {
@@ -84,18 +99,18 @@ export default async function VerifyTokenPage({
                   <p className="text-2xl font-bold">
                     {cert.isRevoked ? "Revocado" : "Valido"}
                   </p>
-                  {getAttribute(cert.metadata, "Nombre del Participante") !== "—" && (
+                  {getAttribute(cert.metadata, "participante") !== "—" && (
                     <p className="text-base mt-1 opacity-90">
-                      {getAttribute(cert.metadata, "Nombre del Participante")}
+                      {getAttribute(cert.metadata, "participante")}
                     </p>
                   )}
                   <p className="text-sm opacity-80 mt-0.5">
-                    {getAttribute(cert.metadata, "Microcredencial") !== "—"
-                      ? getAttribute(cert.metadata, "Microcredencial")
+                    {getAttribute(cert.metadata, "microcredencial") !== "—"
+                      ? getAttribute(cert.metadata, "microcredencial")
                       : `Certificado #${cert.tokenId}`}
                     {" — "}
-                    {getAttribute(cert.metadata, "Institucion") !== "—"
-                      ? getAttribute(cert.metadata, "Institucion")
+                    {getAttribute(cert.metadata, "institucion") !== "—"
+                      ? getAttribute(cert.metadata, "institucion")
                       : "ISTER"}
                   </p>
                 </div>
@@ -115,26 +130,26 @@ export default async function VerifyTokenPage({
                 <div>
                   <dt className="text-gray-500 text-xs">Fecha de emision</dt>
                   <dd className="font-medium">
-                    {getAttribute(cert.metadata, "Fecha de emisión") !== "—"
-                      ? new Date(getAttribute(cert.metadata, "Fecha de emisión")).toLocaleDateString("es-ES")
+                    {getAttribute(cert.metadata, "fecha") !== "—"
+                      ? new Date(getAttribute(cert.metadata, "fecha")).toLocaleDateString("es-ES")
                       : "—"}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Creditos ECTS</dt>
-                  <dd className="font-medium">{getAttribute(cert.metadata, "Créditos ECTS")}</dd>
+                  <dd className="font-medium">{getAttribute(cert.metadata, "ects")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Nivel EQF</dt>
-                  <dd className="font-medium">{getAttribute(cert.metadata, "Nivel EQF")}</dd>
+                  <dd className="font-medium">{getAttribute(cert.metadata, "eqf")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Modalidad</dt>
-                  <dd className="font-medium">{getAttribute(cert.metadata, "Modalidad")}</dd>
+                  <dd className="font-medium">{getAttribute(cert.metadata, "modalidad")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Tipo de Evaluacion</dt>
-                  <dd className="font-medium">{getAttribute(cert.metadata, "Tipo de Evaluación")}</dd>
+                  <dd className="font-medium">{getAttribute(cert.metadata, "evaluac")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Soulbound</dt>
@@ -142,11 +157,11 @@ export default async function VerifyTokenPage({
                 </div>
               </dl>
 
-              {getAttribute(cert.metadata, "Resultados de Aprendizaje") !== "—" && (
+              {getAttribute(cert.metadata, "aprendizaje") !== "—" && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <dt className="text-gray-500 text-xs mb-1">Resultados de Aprendizaje</dt>
                   <dd className="text-sm text-gray-700">
-                    {getAttribute(cert.metadata, "Resultados de Aprendizaje")}
+                    {getAttribute(cert.metadata, "aprendizaje")}
                   </dd>
                 </div>
               )}
@@ -175,6 +190,21 @@ export default async function VerifyTokenPage({
                         className="font-mono text-xs text-brand-600 hover:underline"
                       >
                         {CONTRACT_ADDRESS.slice(0, 10)}...{CONTRACT_ADDRESS.slice(-6)}
+                      </a>
+                    </dd>
+                  </div>
+                )}
+                {cert.txHash && (
+                  <div className="flex gap-2">
+                    <dt className="text-gray-500 shrink-0 w-32">TX Hash</dt>
+                    <dd>
+                      <a
+                        href={`${EXPLORER_BASE}/tx/${cert.txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-xs text-brand-600 hover:underline"
+                      >
+                        {cert.txHash.slice(0, 10)}...{cert.txHash.slice(-6)}
                       </a>
                     </dd>
                   </div>

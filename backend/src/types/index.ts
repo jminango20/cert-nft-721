@@ -27,6 +27,7 @@ export interface CertificateInfo {
   isRevoked: boolean;
   isLocked: boolean;
   tokenURI: string | null;
+  txHash: string | null;
   metadata: Record<string, unknown> | null;
 }
 

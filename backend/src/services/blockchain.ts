@@ -10,6 +10,7 @@ const ABI = [
   "function ownerOf(uint256 tokenId) public view returns (address)",
   "event CertificateMinted(address indexed to, uint256 indexed tokenId, string uri)",
   "event CertificateRevoked(uint256 indexed tokenId)",
+  "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)",
 ];
 
 function getProvider(): ethers.JsonRpcProvider {
@@ -81,11 +82,21 @@ export async function getCertificateInfo(
 
   let tokenURI: string | null = null;
   let isLocked = true;
+  let txHash: string | null = null;
 
   if (!isRevoked) {
     [tokenURI] = await Promise.all([
       contract.tokenURI(tokenId).catch(() => null),
     ]);
+  }
+
+  try {
+    const transferEvents = await contract.queryFilter(
+      contract.filters.Transfer(ethers.ZeroAddress, null, tokenId)
+    );
+    txHash = (transferEvents[0] as { transactionHash?: string })?.transactionHash ?? null;
+  } catch {
+    // best-effort: Transfer event query may fail on some providers
   }
 
   return {
@@ -94,6 +105,7 @@ export async function getCertificateInfo(
     isRevoked,
     isLocked,
     tokenURI,
+    txHash,
     metadata: null,
   };
 }

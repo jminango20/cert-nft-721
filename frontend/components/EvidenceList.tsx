@@ -218,6 +218,16 @@ function EvidenceCard({ item }: { item: EvidenceItem }) {
         </div>
       </div>
 
+      {/* Inline image preview */}
+      {item.type === "image" && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={resolvedUrl}
+          alt={item.title}
+          className="w-full rounded-lg object-cover max-h-48"
+        />
+      )}
+
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
         <a
