@@ -1,5 +1,19 @@
 # Backend — DONE
 
+## QA FAILs — network label fix + test coverage for mint and claim routes
+
+### Alteracoes
+- `CLAUDE.md` (projeto): rede ja estava documentada como Sepolia — sem alteracao necessaria.
+- `routes/mint.ts:155`: atributo `"Rede"` ja continha `"Sepolia"` — sem alteracao necessaria.
+- `frontend/public/manifest.json`: description ja referenciava Sepolia — sem alteracao necessaria.
+- `routes/mint.test.ts` (novo): 17 testes cobrindo auth (401), campos obrigatorios (400), ects/eqfLevel invalidos (400), walletAddress invalida (400), claim-by-email sem email (400), direct-mint happy path (201), claim-by-email happy path (201). Rate-limiter mockado para evitar 429 em testes sequenciais.
+- `routes/claim.test.ts` (novo): 14 testes cobrindo GET 404 token inexistente, GET 200 sem email/studentIdHash na resposta, alreadyClaimed flag, POST 400 wallet invalida, POST 404 token inexistente, POST 409 already claimed, POST 201 happy path com mintCertificate mockado.
+
+### Resultado
+- 51 testes Vitest passam (4 ficheiros, 0 falhas)
+
+---
+
 ## QA B2 — studentId internalization + frontend file-input fix
 
 ### Alteracoes
