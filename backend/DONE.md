@@ -1,5 +1,27 @@
 # Backend — DONE
 
+## feat(verify): persist txHash in tx-index.json, remove unreliable queryFilter
+
+### Root cause
+`contract.queryFilter` on Sepolia is unreliable: providers cap the block range and
+return empty arrays, leaving `txHash: null` in GET /api/verify/:tokenId responses.
+
+### Changes
+- `backend/src/services/TxIndex.ts` (new): file-based store (`tx-index.json`) with
+  `saveTx(tokenId, txHash)` and `getTx(tokenId)` functions.
+- `backend/src/routes/mint.ts`: calls `saveTx` after a successful direct-mint.
+- `backend/src/routes/claim.ts`: calls `saveTx` after a successful claim mint.
+- `backend/src/services/blockchain.ts`: `getCertificateInfo` now resolves `txHash`
+  via `getTx` from TxIndex; the entire `queryFilter` try/catch block is removed.
+- `.gitignore`: `tx-index.json` added (operational data, not source code).
+
+### Result
+- `tsc --noEmit` passes with 0 errors.
+- GET /api/verify/:tokenId returns the correct `txHash` for any certificate minted
+  after this change.
+
+---
+
 ## fix(verify): explicit fromBlock range in queryFilter to resolve txHash null
 
 ### Root cause

@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import { requireApiKey } from "../middleware/auth";
 import { uploadMetadata, uploadBufferToIPFS } from "../services/ipfs";
 import { mintCertificate } from "../services/blockchain";
+import { saveTx } from "../services/TxIndex";
 import { saveClaim, makeExpiry } from "../services/claims";
 import { sendClaimEmail } from "../services/email";
 import { CertificateMetadata, EvidenceItem, ClaimRecord } from "../types";
@@ -215,6 +216,7 @@ router.post(
       }
 
       const { tokenId, txHash } = await mintCertificate(walletAddress, ipfsUri);
+      saveTx(tokenId.toString(), txHash);
 
       res.status(201).json({ tokenId, txHash, ipfsCid, flow: "direct-mint" });
     } catch (err: unknown) {

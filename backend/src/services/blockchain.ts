@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { CertificateInfo } from "../types";
+import { getTx } from "./TxIndex";
 
 const ABI = [
   "function mint(address to, string calldata uri) external returns (uint256)",
@@ -90,24 +91,7 @@ export async function getCertificateInfo(
     ]);
   }
 
-  try {
-    const provider = getProvider();
-    const currentBlock = await provider.getBlockNumber();
-    const fromBlock = Math.max(0, currentBlock - 100000);
-
-    const filter = contract.filters.Transfer(
-      ethers.ZeroAddress, // from = address(0) = mint event
-      null,               // to = any
-      tokenId
-    );
-    const events = await contract.queryFilter(filter, fromBlock, "latest");
-    console.log("[verify] queryFilter events:", events.length);
-    txHash = (events[0] as { transactionHash?: string })?.transactionHash ?? null;
-    // Fallback: if events is still empty, provider.getTransactionReceipt(knownTxHash)
-    // could be tried if the txHash is stored off-chain (e.g. in the database).
-  } catch {
-    // best-effort: Transfer event query may fail on some providers
-  }
+  txHash = getTx(tokenId.toString());
 
   return {
     tokenId: tokenId.toString(),

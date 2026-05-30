@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { getClaim, associateWallet } from "../services/claims";
 import { mintCertificate } from "../services/blockchain";
+import { saveTx } from "../services/TxIndex";
 
 const router = Router();
 
@@ -75,6 +76,7 @@ router.post("/:token", async (req: Request, res: Response): Promise<void> => {
   try {
     const ipfsUri = `ipfs://${record.ipfsCid}`;
     const { tokenId, txHash } = await mintCertificate(walletAddress, ipfsUri);
+    saveTx(tokenId.toString(), txHash);
 
     associateWallet(token, walletAddress, tokenId, txHash);
 

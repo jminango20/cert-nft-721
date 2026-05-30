@@ -18,3 +18,6 @@ out/
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Operational data — not source code
+tx-index.json
