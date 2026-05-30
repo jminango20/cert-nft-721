@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { OwnedCertificate } from "@/lib/api";
@@ -34,6 +34,11 @@ function formatDateEs(isoDate: string): string {
 export default function CertificateListCard({ cert }: Props) {
   const [qrOpen, setQrOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [verifyUrl, setVerifyUrl] = useState(`/verify/${cert.tokenId}`);
+
+  useEffect(() => {
+    setVerifyUrl(`${window.location.origin}/verify/${cert.tokenId}`);
+  }, [cert.tokenId]);
 
   const attrs = getAttrs(cert.metadata);
   const title = getAttribute(attrs, "microcredencial");
@@ -45,18 +50,9 @@ export default function CertificateListCard({ cert }: Props) {
   const displayInstitution = institution !== "—" ? institution : "ISTER";
   const displayDate = rawDate !== "—" ? formatDateEs(rawDate) : "—";
 
-  const verifyUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/verify/${cert.tokenId}`
-      : `/verify/${cert.tokenId}`;
-
   async function handleShare() {
-    const url =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/verify/${cert.tokenId}`
-        : `/verify/${cert.tokenId}`;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(verifyUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
