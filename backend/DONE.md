@@ -1,5 +1,18 @@
 # Backend — DONE
 
+## VerifyService hardening — ipfs gateway, txHash, email silent-fail
+
+### Changes
+- `services/email.ts`: `getClient()` now returns `null` instead of throwing when `RESEND_API_KEY` is absent; `sendClaimEmail` skips sending silently with a `console.warn`. This makes the email service truly non-fatal at the source, not only at the call site.
+- `.env.example`: added a three-line comment block above `RESEND_API_KEY` documenting that the variable is optional and that the claim-by-email flow degrades gracefully without it.
+
+### Verification
+- `ipfsToHttp` was already applied before `fetch()` in `routes/verify.ts` (line 24) — no change needed.
+- `txHash` from the mint Transfer event was already queried in `services/blockchain.ts` via `contract.queryFilter(Transfer(ZeroAddress, null, tokenId))` and included in `CertificateInfo` — no change needed.
+- `tsc --noEmit` passes with 0 errors after the changes.
+
+---
+
 ## QA FAILs — network label fix + test coverage for mint and claim routes
 
 ### Alteracoes

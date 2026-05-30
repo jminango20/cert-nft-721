@@ -1,8 +1,8 @@
 import { Resend } from "resend";
 
-function getClient(): Resend {
+function getClient(): Resend | null {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("RESEND_API_KEY not set");
+  if (!apiKey) return null;
   return new Resend(apiKey);
 }
 
@@ -13,6 +13,10 @@ export async function sendClaimEmail(opts: {
   claimToken: string;
 }): Promise<void> {
   const resend = getClient();
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY not configured — skipping email send");
+    return;
+  }
   const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:3000";
   const claimUrl = `${frontendUrl}/claim/${opts.claimToken}`;
 
