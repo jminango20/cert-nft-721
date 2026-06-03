@@ -1,5 +1,36 @@
 # Frontend — DONE
 
+## Sesion actual (2026-06-02) — Descarga de certificado en PDF
+
+### Cambios
+
+| Archivo | Tipo | Descripcion |
+|---------|------|-------------|
+| `components/CertificatePDF.tsx` | Nuevo | Documento React-PDF con layout ISTER: logo, titulo, nombre del participante, microcredencial, ECTS/EQF/Modalidad/Fecha, emisor, QR code y pie blockchain |
+| `components/CertificateDownloadButton.tsx` | Nuevo | Boton cliente que genera QR con `qrcode` y renderiza `PDFDownloadLink` de `@react-pdf/renderer`; usa `useEffect` para el QR data URL |
+| `components/VerifyDownloadButton.tsx` | Nuevo | Thin wrapper `"use client"` con `dynamic(..., {ssr:false})` para inyectar el boton de descarga en la pagina SSR `/verify/[tokenId]` |
+| `components/CertificateListCard.tsx` | Actualizado | Importa `CertificateDownloadButton` via `dynamic` con `ssr:false`; acepta prop `studentName?`; muestra boton "Descargar PDF" en certificados no revocados |
+| `app/aluno/page.tsx` | Actualizado | Calcula `studentName` desde Privy (nombre Google > email > "Participante"); lo pasa a `CertificateListCard` |
+| `app/verify/[tokenId]/page.tsx` | Actualizado | Importa `VerifyDownloadButton`; muestra seccion "Descargar Certificado" para certificados validos |
+
+### Comportamiento implementado
+
+- Nombre del alumno: viene de Privy (Google name o email) en `/aluno`; en `/verify` se usa "Participante" (datos personales nunca on-chain ni en IPFS)
+- QR en el PDF: generado client-side con `qrcode.toDataURL`, apunta a `https://educert.vercel.app/verify/[tokenId]`
+- Nombre del archivo: `certificado-[tokenId]-ISTER.pdf`
+- Compatible SSR: `@react-pdf/renderer` cargado solo en cliente via `next/dynamic` con `{ssr:false}`
+- Botones no aparecen en certificados revocados
+
+### Dependencias anadidas
+
+| Paquete | Version | Uso |
+|---------|---------|-----|
+| `@react-pdf/renderer` | ^4.x | Generacion de PDF en cliente |
+| `qrcode` | ^1.x | QR code como data URL para incrustar en PDF |
+| `@types/qrcode` | ^1.x | Tipos TypeScript para qrcode |
+
+---
+
 ## Sesion actual (2026-06-02) — Dashboard admin com lista de certificados
 
 ### Cambios

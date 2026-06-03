@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CertificateInfo } from "@/lib/api";
 import QRCodeSection from "@/components/QRCodeSection";
 import EvidenceList from "@/components/EvidenceList";
+import VerifyDownloadButton from "@/components/VerifyDownloadButton";
 import { getAttribute } from "@/lib/attributeHelper";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
@@ -257,6 +258,20 @@ export default async function VerifyTokenPage({
               </p>
               <QRCodeSection url={verifyUrl} tokenId={params.tokenId} />
             </div>
+
+            {/* ── 6. Descargar PDF ── */}
+            {!cert.isRevoked && (
+              <div className="bg-white rounded-xl shadow border border-gray-200 p-6 flex flex-col gap-3">
+                <h3 className="font-semibold text-gray-800">Descargar Certificado</h3>
+                <p className="text-xs text-gray-500">
+                  Descarga una copia en PDF de este certificado con codigo QR de verificacion.
+                </p>
+                <VerifyDownloadButton
+                  tokenId={params.tokenId}
+                  attributes={getAttrs(cert.metadata)}
+                />
+              </div>
+            )}
 
           </div>
         )}

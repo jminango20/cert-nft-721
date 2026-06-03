@@ -9,6 +9,17 @@ import { api, OwnedCertificate } from "@/lib/api";
 
 export default function AlunoPage() {
   const { ready, authenticated, user } = usePrivy();
+
+  function getStudentName(): string {
+    if (!user) return "Participante";
+    // Prefer Google given name, then email address prefix, never wallet address
+    const google = user.linkedAccounts?.find((a) => a.type === "google_oauth");
+    if (google && "name" in google && typeof google.name === "string" && google.name) {
+      return google.name;
+    }
+    if (user.email?.address) return user.email.address;
+    return "Participante";
+  }
   const [certs, setCerts] = useState<OwnedCertificate[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -89,7 +100,7 @@ export default function AlunoPage() {
       ) : (
         <div className="space-y-4">
           {certs.map((cert) => (
-            <CertificateListCard key={cert.tokenId} cert={cert} />
+            <CertificateListCard key={cert.tokenId} cert={cert} studentName={getStudentName()} />
           ))}
         </div>
       )}

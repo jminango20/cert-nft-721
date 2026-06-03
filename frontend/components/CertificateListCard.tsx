@@ -1,13 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { OwnedCertificate } from "@/lib/api";
 import { getAttribute } from "@/lib/attributeHelper";
 
+// Loaded client-side only — @react-pdf/renderer is incompatible with SSR
+const CertificateDownloadButton = dynamic(
+  () => import("@/components/CertificateDownloadButton"),
+  { ssr: false }
+);
+
 interface Props {
   cert: OwnedCertificate;
+  /** Student display name shown in the PDF. Never the wallet address. */
+  studentName?: string;
 }
 
 function getAttrs(
@@ -31,7 +40,7 @@ function formatDateEs(isoDate: string): string {
   }
 }
 
-export default function CertificateListCard({ cert }: Props) {
+export default function CertificateListCard({ cert, studentName }: Props) {
   const [qrOpen, setQrOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [verifyUrl, setVerifyUrl] = useState(`/verify/${cert.tokenId}`);
@@ -118,6 +127,14 @@ export default function CertificateListCard({ cert }: Props) {
           >
             Codigo QR
           </button>
+          {!cert.isRevoked && (
+            <CertificateDownloadButton
+              tokenId={cert.tokenId}
+              attributes={attrs}
+              studentName={studentName ?? "Participante"}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            />
+          )}
         </div>
       </div>
 
