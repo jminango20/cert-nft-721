@@ -7,6 +7,7 @@ import VerifyDownloadButton from "@/components/VerifyDownloadButton";
 import VerifyPresentMode from "@/components/VerifyPresentMode";
 import LinkedInButton from "@/components/LinkedInButton";
 import { getAttribute } from "@/lib/attributeHelper";
+import BlockchainProofHeading from "@/components/BlockchainProofHeading";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "";
@@ -229,7 +230,7 @@ export default async function VerifyTokenPage({
 
             {/* ── 4. Prueba Blockchain ── */}
             <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-800 mb-3">Prueba Blockchain</h3>
+              <BlockchainProofHeading />
               <dl className="space-y-2 text-sm">
                 <div className="flex gap-2">
                   <dt className="text-gray-500 shrink-0 w-32">Token ID</dt>
