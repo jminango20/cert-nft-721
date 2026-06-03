@@ -1,5 +1,6 @@
 import { PrismaClient, Certificate } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { getTx } from "./TxIndex";
 
 export interface CreateCertificateData {
   tokenId: number;
@@ -59,9 +60,17 @@ class CertificateRepository {
   }
 
   async markRevoked(tokenId: number): Promise<void> {
-    await this.prisma.certificate.update({
+    await this.prisma.certificate.upsert({
       where: { tokenId },
-      data: { revokedAt: new Date() },
+      update: { revokedAt: new Date() },
+      create: {
+        tokenId,
+        txHash: getTx(tokenId.toString()) ?? "legacy",
+        recipientName: "legacy",
+        courseTitle: "legacy",
+        ipfsCid: "legacy",
+        revokedAt: new Date(),
+      },
     });
   }
 

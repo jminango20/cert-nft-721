@@ -1,5 +1,25 @@
 # Backend — DONE
 
+## fix(backend): upsert in markRevoked to handle legacy tokens
+
+### Problem
+`markRevoked` used `prisma.certificate.update`, which throws `RecordNotFound` when the
+row does not exist — for example, certificates minted before Prisma was introduced.
+
+### Changes
+- `src/services/CertificateRepository.ts`: replaced `update` with `upsert` in
+  `markRevoked`. The `create` block seeds a minimal "legacy" row using `getTx` from
+  `TxIndex` to recover the original `txHash` when available, falling back to `"legacy"`.
+- Added `import { getTx } from "./TxIndex"` at the top of the file.
+- `markClaimed` left unchanged: it is always called with a valid `claimToken` that was
+  persisted at mint time, so the row is guaranteed to exist.
+
+### Verification
+- `tsc --noEmit` passes with 0 errors.
+
+---
+
+
 ## feat(backend): add Prisma + SQLite certificate repository
 
 ### New files
