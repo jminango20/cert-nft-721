@@ -1,5 +1,22 @@
 # Backend — DONE
 
+## perf(backend): in-memory cache for IPFS metadata fetches
+
+### Changes
+- `services/MetadataCache.ts` (new): exports `ipfsToHttp` and `fetchMetadataWithCache`.
+  Cache is a module-level `Map<string, object>` — same process lifetime, no TTL needed for a PoC.
+  Fetch timeout raised to 15 s (IPFS gateways cold-start can take 10+ s).
+- `routes/verify.ts`: replaced local `ipfsToHttp` + inline `fetch` with `fetchMetadataWithCache`.
+- `routes/certificates.ts`: replaced local `ipfsToHttp` + inline `fetch` (5 s timeout) with
+  `fetchMetadataWithCache`. Metadata fetches for multiple tokens remain parallel via `Promise.all`.
+
+### Result
+- Repeated `GET /api/verify/:tokenId` or `GET /api/certificates?owner=` calls for the same CID
+  return the cached object without hitting the IPFS gateway again.
+- `tsc --noEmit` passes with 0 errors.
+
+---
+
 ## feat(verify): persist txHash in tx-index.json, remove unreliable queryFilter
 
 ### Root cause

@@ -1,12 +1,6 @@
 import { Router } from "express";
 import { getCertificateInfo } from "../services/blockchain";
-
-function ipfsToHttp(uri: string): string {
-  if (uri.startsWith("ipfs://")) {
-    return uri.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
-  }
-  return uri;
-}
+import { fetchMetadataWithCache } from "../services/MetadataCache";
 
 const router = Router();
 
@@ -21,12 +15,8 @@ router.get("/:tokenId", async (req, res) => {
     const info = await getCertificateInfo(tokenId);
 
     if (info.tokenURI) {
-      const gatewayUrl = ipfsToHttp(info.tokenURI);
       try {
-        const metaRes = await fetch(gatewayUrl, { signal: AbortSignal.timeout(5000) });
-        if (metaRes.ok) {
-          info.metadata = await metaRes.json() as Record<string, unknown>;
-        }
+        info.metadata = await fetchMetadataWithCache(info.tokenURI);
       } catch {
         // metadata fetch is best-effort
       }

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { ethers } from "ethers";
 import { readAll } from "../services/TxIndex";
+import { fetchMetadataWithCache } from "../services/MetadataCache";
 
 const ABI = [
   "function ownerOf(uint256 tokenId) public view returns (address)",
@@ -18,13 +19,6 @@ function getContract(): ethers.Contract {
   const address = process.env.CONTRACT_ADDRESS;
   if (!address) throw new Error("CONTRACT_ADDRESS not set");
   return new ethers.Contract(address, ABI, getProvider());
-}
-
-function ipfsToHttp(uri: string): string {
-  if (uri.startsWith("ipfs://")) {
-    return uri.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
-  }
-  return uri;
 }
 
 const router = Router();
@@ -86,13 +80,7 @@ router.get("/", async (req, res) => {
         let metadata: Record<string, unknown> | null = null;
         if (rawTokenURI && !isRevoked) {
           try {
-            const url = ipfsToHttp(rawTokenURI);
-            const metaRes = await fetch(url, {
-              signal: AbortSignal.timeout(5000),
-            });
-            if (metaRes.ok) {
-              metadata = (await metaRes.json()) as Record<string, unknown>;
-            }
+            metadata = await fetchMetadataWithCache(rawTokenURI);
           } catch {
             // best-effort
           }
