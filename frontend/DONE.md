@@ -1,5 +1,31 @@
 # Frontend — DONE
 
+## Sesion actual (2026-06-02) — Dashboard admin com lista de certificados
+
+### Cambios
+
+| Archivo | Tipo | Descripcion |
+|---------|------|-------------|
+| `app/admin/page.tsx` | Actualizado | Aniadido sistema de tabs: "Emitir Certificado" (layout existente) y "Ver Dashboard" (nueva CertificateTable) |
+| `components/CertificateTable.tsx` | Nuevo | Tabla de certificados con filtro por estado (dropdown), busqueda por nombre, badge de estado (Valido/Pendente/Revogado), accion Ver (nueva pestana) y Revogar (confirm dialog + actualizacion local sin reload) |
+| `app/api/admin/certificates/route.ts` | Nuevo | Route handler Next.js — proxy a `GET /api/admin/certificates` con API key server-side (no expuesta al cliente) |
+
+### Comportamiento implementado
+
+- Filtro por estado: Todos / Validos / Pendentes de claim / Revogados
+- Busqueda en tiempo real por nombre del destinatario
+- Badge de estado: verde (valido), amarelo (pendente), rojo (revogado)
+- Fecha formateada con `toLocaleDateString('es-ES')` en columna Emision
+- Revogar: confirm dialog → `POST /api/revoke` → fila pasa a rojo sin reload
+- Boton Revogar desaparece tras revocar; solo queda Ver
+- Wallet del alumno nunca expuesta (columna Nombre, no direccion)
+
+### Dependencias anadidas
+
+Ninguna nueva.
+
+---
+
 ## Sesion actual (2026-05-29) — Rediseno /aluno: auto-carga por wallet, sin campo Token ID
 
 ### Cambios
