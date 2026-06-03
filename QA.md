@@ -104,3 +104,45 @@ Todos os issues foram corrigidos no commit `c32567a` (fix(backend): restrict COR
 | `"use client"` no layout bloqueia metadata | INFORMATIVA | PASS |
 
 **6/6 issues resolvidos. Nenhuma falha pendente.**
+
+---
+
+## Validação MVP Semana 1 — 2026-05-29
+
+### Tabela de resultados
+
+| # | Ponto verificado | STATUS | Ficheiro(s) relevante(s) | Detalhe |
+|---|-----------------|--------|--------------------------|---------|
+| B2 | studentId recebido em plain text; keccak256 calculado internamente | OK | `backend/src/routes/mint.ts:87` | `const studentIdHash = keccak256(toUtf8Bytes(studentId))` na linha 87, imediatamente após a recepção do campo. O hash (não o plain text) é o único valor que segue para IPFS e on-chain. A linha 86 inclui comentário explícito: "plain studentId never leaves this function". |
+| B2a | Dados pessoais ausentes do payload IPFS | OK | `backend/src/routes/mint.ts:141-159` | O objecto `metadata` enviado para Pinata contém apenas `studentIdHash` (campo `"Student ID (hash)"`), nunca `studentId`, `recipientName` ou `recipientEmail`. |
+| IMG | Input de imagem com `accept` correcto | OK | `frontend/components/MintForm.tsx:446` | PDF: `accept="application/pdf"`. Imagem: `accept="image/png,image/jpeg,image/webp"`. Reforçado no backend pelo multer (`ALLOWED_MIMETYPES` — linha 23-29 de `mint.ts`). Ficheiros arbitrários são bloqueados em ambas as camadas. |
+| JSON | `mint-test.json` ausente do repositório | OK | — | Pesquisa recursiva em todo o projecto (excluindo `node_modules`) não encontrou qualquer ficheiro `mint-test*`. |
+| META | Campo Rede nos atributos do NFT | OK | `backend/src/routes/mint.ts:156` | Rede oficial definida como Sepolia (decisão 2026-06-02). `mint.ts`, `CLAUDE.md`, `manifest.json`, `hardhat.config.ts` e `.env.example` todos coerentes com Sepolia. |
+| META-b | `manifest.json` descreve rede | OK | `frontend/public/manifest.json:4` | Description diz "na Sepolia" — coerente com a rede oficial. |
+| TST | Testes para `/api/mint` | OK | `backend/src/routes/mint.test.ts` | Adicionado em commit `a757c40`. |
+| TST | Testes para `/api/claim/:token` | OK | `backend/src/routes/claim.test.ts` | Adicionado em commit `a757c40`. |
+| TST | Testes existentes (revoke + verify) — execução | OK | `backend/src/routes/revoke.test.ts`, `backend/src/routes/verify.test.ts` | `npx vitest run`: **20/20 testes passaram** (2 ficheiros, 874 ms). Sem falhas. |
+| ENV | `.env.example` com todas as variáveis, sem valores reais | OK | `backend/.env.example` | Todas as variáveis presentes (`RPC_URL`, `PRIVATE_KEY`, `CONTRACT_ADDRESS`, `PINATA_JWT`, `API_KEY`, `PORT`, `FRONTEND_URL`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`). Valores são placeholders (`your_pinata_jwt_token`, `change-me-in-production`, etc.). |
+| ENV | `.env.local` não commitado | OK | `frontend/.gitignore` | `frontend/.env.local` está em `.gitignore` e não consta em `git ls-files`. |
+| PWA | Manifesto presente e ícones existem | OK | `frontend/public/manifest.json`, `frontend/public/icon-192.png`, `frontend/public/icon-512.png` | Manifesto válido. Ícones PNG presentes. |
+
+### Acções necessárias
+
+Nenhuma. Todos os bloqueadores resolvidos (ver Revalidação 2026-06-02).
+
+### Aprovado para
+
+**Demo MVP semana 1: APROVADO.** Todos os FAILs resolvidos. Funcionalidade core operacional. Pronto para merge em `main`.
+
+---
+
+## Revalidação — 2026-06-02
+
+| Issue | Status |
+|-------|--------|
+| META: rede Sepolia vs Polygon Amoy | PASS — decisão tomada: Sepolia é a rede oficial. Código e docs coerentes. |
+| META-b: manifest.json rede | PASS — já dizia Sepolia, alinhado com decisão. |
+| TST: mint.test.ts | PASS — existe em `backend/src/routes/mint.test.ts` (commit `a757c40`). |
+| TST: claim.test.ts | PASS — existe em `backend/src/routes/claim.test.ts` (commit `a757c40`). |
+
+**Resultado: 0 FAILs pendentes. Pronto para merge em `main`.**

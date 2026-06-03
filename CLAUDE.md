@@ -2,13 +2,13 @@
 
 ## O que é este projeto
 Sistema de emissão de microcredenciais educativas como NFTs soulbound (ERC-721)
-na rede Polygon Amoy. Backend Node/TypeScript, frontend Next.js 14 PWA.
+na rede Sepolia. Backend Node/TypeScript, frontend Next.js 14 PWA.
 
 ## Stack
 - Contratos: Solidity 0.8.24, OpenZeppelin 5, Hardhat, TypeScript
 - Backend: Node.js, Express, TypeScript, ethers v6, Pinata SDK
 - Frontend: Next.js 14 App Router, TypeScript, wagmi v2, Privy, next-pwa
-- Rede: Polygon Amoy testnet
+- Rede: Sepolia testnet
 - Storage: IPFS via Pinata (PoC), Arweave/Irys (produção futura)
 
 ## Regras absolutas
