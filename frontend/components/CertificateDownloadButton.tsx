@@ -24,6 +24,7 @@ export interface CertificateDownloadButtonProps {
   attributes: Attribute[];
   /** Student display name shown in PDF (never wallet address) */
   studentName: string;
+  txHash?: string | null;
   className?: string;
 }
 
@@ -31,6 +32,7 @@ function CertificateDownloadButtonInner({
   tokenId,
   attributes,
   studentName,
+  txHash,
   className,
 }: CertificateDownloadButtonProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -72,6 +74,7 @@ function CertificateDownloadButtonInner({
       attributes={attributes}
       studentName={studentName}
       contractAddress={CONTRACT_ADDRESS}
+      txHash={txHash}
       qrDataUrl={qrDataUrl}
     />
   );

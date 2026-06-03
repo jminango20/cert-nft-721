@@ -132,6 +132,7 @@ export default function CertificateListCard({ cert, studentName }: Props) {
               tokenId={cert.tokenId}
               attributes={attrs}
               studentName={studentName ?? "Participante"}
+              txHash={cert.txHash}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             />
           )}

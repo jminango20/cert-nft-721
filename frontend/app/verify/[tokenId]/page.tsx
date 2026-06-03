@@ -269,6 +269,7 @@ export default async function VerifyTokenPage({
                 <VerifyDownloadButton
                   tokenId={params.tokenId}
                   attributes={getAttrs(cert.metadata)}
+                  txHash={cert.txHash}
                 />
               </div>
             )}

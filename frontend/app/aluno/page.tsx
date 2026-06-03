@@ -17,7 +17,6 @@ export default function AlunoPage() {
     if (google && "name" in google && typeof google.name === "string" && google.name) {
       return google.name;
     }
-    if (user.email?.address) return user.email.address;
     return "Participante";
   }
   const [certs, setCerts] = useState<OwnedCertificate[]>([]);
@@ -100,7 +99,7 @@ export default function AlunoPage() {
       ) : (
         <div className="space-y-4">
           {certs.map((cert) => (
-            <CertificateListCard key={cert.tokenId} cert={cert} studentName={getStudentName()} />
+            <CertificateListCard key={cert.tokenId} cert={cert} studentName={cert.recipientName ?? getStudentName()} />
           ))}
         </div>
       )}

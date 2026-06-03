@@ -2,6 +2,7 @@ import { Router } from "express";
 import { ethers } from "ethers";
 import { readAll } from "../services/TxIndex";
 import { fetchMetadataWithCache } from "../services/MetadataCache";
+import { certificateRepository } from "../services/CertificateRepository";
 
 const ABI = [
   "function ownerOf(uint256 tokenId) public view returns (address)",
@@ -86,11 +87,14 @@ router.get("/", async (req, res) => {
           }
         }
 
+        const dbRecord = await certificateRepository.findByTokenId(parseInt(tokenId)).catch(() => null);
+
         return {
           tokenId,
           metadata,
           isRevoked,
           txHash,
+          recipientName: dbRecord?.recipientName ?? null,
         };
       })
     );

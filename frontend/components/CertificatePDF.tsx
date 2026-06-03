@@ -183,6 +183,8 @@ export interface CertificatePDFProps {
   studentName: string;
   /** Contract address for footer */
   contractAddress?: string;
+  /** Mint transaction hash for footer */
+  txHash?: string | null;
   /** QR code data URL (png) generated from `qrcode` package */
   qrDataUrl: string;
 }
@@ -204,6 +206,7 @@ export default function CertificatePDF({
   attributes,
   studentName,
   contractAddress,
+  txHash,
   qrDataUrl,
 }: CertificatePDFProps) {
   const microcredencial = getAttribute(attributes, "microcredencial");
@@ -215,9 +218,7 @@ export default function CertificatePDF({
   const displayTitle = microcredencial !== "—" ? microcredencial : "Microcredencial";
   const displayDate = rawDate !== "—" ? formatDateEs(rawDate) : "—";
 
-  const shortAddress = contractAddress
-    ? `${contractAddress.slice(0, 10)}...${contractAddress.slice(-6)}`
-    : null;
+  const shortAddress = contractAddress ?? null;
 
   const verifyUrl = `https://educert.vercel.app/verify/${tokenId}`;
 
@@ -302,6 +303,11 @@ export default function CertificatePDF({
           {shortAddress && (
             <Text style={styles.footerAddress}>
               Contrato: {shortAddress}
+            </Text>
+          )}
+          {txHash && (
+            <Text style={styles.footerAddress}>
+              Tx: {txHash}
             </Text>
           )}
         </View>

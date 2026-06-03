@@ -75,6 +75,7 @@ export interface OwnedCertificate {
   metadata: Record<string, unknown> | null;
   isRevoked: boolean;
   txHash: string | null;
+  recipientName: string | null;
 }
 
 export const api = {
