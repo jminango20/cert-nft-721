@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { CertificateInfo } from "@/lib/api";
 import QRCodeSection from "@/components/QRCodeSection";
 import EvidenceList from "@/components/EvidenceList";
 import VerifyDownloadButton from "@/components/VerifyDownloadButton";
+import VerifyPresentMode from "@/components/VerifyPresentMode";
 import { getAttribute } from "@/lib/attributeHelper";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
@@ -55,7 +57,41 @@ export default async function VerifyTokenPage({
   const cert = await getCert(params.tokenId);
   const verifyUrl = `${APP_URL}/verify/${params.tokenId}`;
 
+  // Precompute values for VerifyPresentMode (Server Component → Client Component props)
+  const certAttrs = cert ? getAttrs(cert.metadata) : [];
+  const presentTitle = getAttribute(certAttrs, "microcredencial");
+  const presentInstitution = getAttribute(certAttrs, "institucion");
+  const presentRawDate = getAttribute(certAttrs, "fecha");
+  const presentDisplayDate =
+    presentRawDate !== "—"
+      ? new Date(presentRawDate).toLocaleDateString("es-ES", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })
+      : "—";
+
   return (
+    <>
+      {/* Fullscreen presentation overlay — only mounts when ?present=true */}
+      {cert && (
+        <Suspense fallback={null}>
+          <VerifyPresentMode
+            tokenId={params.tokenId}
+            isRevoked={cert.isRevoked}
+            title={presentTitle}
+            institution={presentInstitution}
+            displayDate={presentDisplayDate}
+            ects={getAttribute(certAttrs, "ects")}
+            eqf={getAttribute(certAttrs, "eqf")}
+            modalidad={getAttribute(certAttrs, "modalidad")}
+            evaluac={getAttribute(certAttrs, "evaluac")}
+            isLocked={cert.isLocked}
+            verifyUrl={verifyUrl}
+            attrs={certAttrs}
+          />
+        </Suspense>
+      )}
     <div className="min-h-screen flex flex-col items-center p-6 bg-gray-50">
       <div className="max-w-2xl w-full space-y-4 py-6">
         <Link href="/verify" className="text-sm text-brand-600 hover:underline block">
@@ -278,5 +314,6 @@ export default async function VerifyTokenPage({
         )}
       </div>
     </div>
+    </>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { OwnedCertificate } from "@/lib/api";
 import { getAttribute } from "@/lib/attributeHelper";
@@ -44,6 +45,7 @@ export default function CertificateListCard({ cert, studentName }: Props) {
   const [qrOpen, setQrOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [verifyUrl, setVerifyUrl] = useState(`/verify/${cert.tokenId}`);
+  const router = useRouter();
 
   useEffect(() => {
     setVerifyUrl(`${window.location.origin}/verify/${cert.tokenId}`);
@@ -66,6 +68,17 @@ export default function CertificateListCard({ cert, studentName }: Props) {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // fallback: do nothing
+    }
+  }
+
+  function handlePresent() {
+    // Navigate to present mode in same tab, then request fullscreen from user gesture
+    router.push(`/verify/${cert.tokenId}?present=true`);
+    const el = document.documentElement;
+    if (el.requestFullscreen) {
+      el.requestFullscreen().catch(() => {
+        // Fullscreen denied — page still opens in present mode
+      });
     }
   }
 
@@ -127,6 +140,15 @@ export default function CertificateListCard({ cert, studentName }: Props) {
           >
             Codigo QR
           </button>
+          {!cert.isRevoked && (
+            <button
+              type="button"
+              onClick={handlePresent}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Presentar
+            </button>
+          )}
           {!cert.isRevoked && (
             <CertificateDownloadButton
               tokenId={cert.tokenId}

@@ -1,5 +1,31 @@
 # Frontend — DONE
 
+## Sesion actual (2026-06-02) — Modo presentacion pantalla completa en /verify/[tokenId]
+
+### Cambios
+
+| Archivo | Tipo | Descripcion |
+|---------|------|-------------|
+| `components/VerifyPresentMode.tsx` | Nuevo | Overlay cliente de pantalla completa; lee `?present=true` con `useSearchParams`; muestra badge de estado, titulo, institucion, fecha, campos academicos y QR 200x200; boton "Salir" llama `document.exitFullscreen()` y elimina el param de la URL; salida tambien con tecla Escape |
+| `app/verify/[tokenId]/page.tsx` | Actualizado | Importa `VerifyPresentMode` envuelto en `<Suspense>`; precalcula props en el Server Component y las pasa al cliente; la pagina normal permanece intacta cuando `present` no esta en la URL |
+| `components/CertificateListCard.tsx` | Actualizado | Anadido boton "Presentar" (solo en certificados validos); llama `router.push(/verify/[tokenId]?present=true)` y `document.documentElement.requestFullscreen()` desde el mismo gesto de usuario |
+
+### Comportamiento implementado
+
+- `?present=true` activa overlay `fixed inset-0 z-50 bg-white` que cubre header/footer/nav
+- Overlay muestra unicamente: badge de estado, titulo, institucion, fecha, ECTS/EQF/Modalidad/Evaluacion, QR 200x200
+- Boton "Salir" (esquina superior derecha): llama `exitFullscreen` y hace `router.replace` sin el query param
+- Tecla Escape cierra la presentacion con el mismo efecto
+- `requestFullscreen` se llama desde el clic del boton "Presentar" (gesto de usuario); si el navegador lo deniega la pagina de presentacion se muestra de todas formas
+- Sin `?present=true` el componente devuelve `null` — comportamiento normal sin cambios
+- Pagina /verify sigue siendo SSR; `VerifyPresentMode` usa `useSearchParams` correctamente con `<Suspense>`
+
+### Dependencias anadidas
+
+Ninguna nueva — `qrcode.react` y `next/navigation` ya estaban en el proyecto.
+
+---
+
 ## Sesion actual (2026-06-02) — Descarga de certificado en PDF
 
 ### Cambios
