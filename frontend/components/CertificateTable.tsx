@@ -30,7 +30,7 @@ function EstadoBadge({ estado }: { estado: AdminCertificate["estado"] }) {
   if (estado === "pendente") {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-        <span aria-hidden="true">&#9203;</span> Pendente claim
+        <span aria-hidden="true">&#9203;</span> Pendiente de reclamar
       </span>
     );
   }
@@ -130,7 +130,7 @@ export default function CertificateTable() {
   const filterLabels: Record<FilterEstado, string> = {
     all: "Todos",
     valido: "Validos",
-    pendente: "Pendentes de claim",
+    pendente: "Pendientes de reclamar",
     revogado: "Revogados",
   };
 

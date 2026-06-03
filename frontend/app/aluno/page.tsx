@@ -83,7 +83,7 @@ export default function AlunoPage() {
             Aun no tienes certificados emitidos
           </h2>
           <p className="text-sm text-gray-500">
-            Si recibiste un enlace de claim, usalo para reclamar tu certificado.
+            Si recibiste un enlace de reclamacion, usalo para obtener tu certificado.
           </p>
         </div>
       ) : (

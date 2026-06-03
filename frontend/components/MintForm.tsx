@@ -20,7 +20,7 @@ interface MintResult {
 
 const EVIDENCE_TYPES = ["PDF", "Imagen", "Enlace", "Video"];
 const EQF_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8];
-const PAISES = ["Espana", "Portugal"];
+const PAISES = ["Ecuador"];
 const MODALIDADES = ["Presencial", "Online", "Hibrido"];
 
 const emptyEvidence = (): EvidenceEntry => ({
@@ -41,7 +41,7 @@ export default function MintForm() {
     walletAddress: "",
     courseTitle: "",
     courseId: "",
-    country: "Espana",
+    country: "Ecuador",
     issueDate: new Date().toISOString().split("T")[0],
     learningOutcomes: "",
     ects: "1",
@@ -174,7 +174,7 @@ export default function MintForm() {
           <div className="flex flex-wrap gap-2">
             {modeBtn("wallet", "Wallet directa (0x...)")}
             {modeBtn("email", "Email")}
-            {modeBtn("link", "Link de claim")}
+            {modeBtn("link", "Enlace de reclamacion")}
           </div>
           {destinatarioMode === "email" && (
             <p className="text-xs text-gray-400 mt-2">
