@@ -5,6 +5,7 @@ import QRCodeSection from "@/components/QRCodeSection";
 import EvidenceList from "@/components/EvidenceList";
 import VerifyDownloadButton from "@/components/VerifyDownloadButton";
 import VerifyPresentMode from "@/components/VerifyPresentMode";
+import LinkedInButton from "@/components/LinkedInButton";
 import { getAttribute } from "@/lib/attributeHelper";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
@@ -306,6 +307,26 @@ export default async function VerifyTokenPage({
                   tokenId={params.tokenId}
                   attributes={getAttrs(cert.metadata)}
                   txHash={cert.txHash}
+                />
+              </div>
+            )}
+
+            {/* ── 7. Añadir a LinkedIn ── */}
+            {!cert.isRevoked && (
+              <div className="bg-white rounded-xl shadow border border-gray-200 p-6 flex flex-col gap-3">
+                <h3 className="font-semibold text-gray-800">Compartir en LinkedIn</h3>
+                <p className="text-xs text-gray-500">
+                  Añade este certificado a tu perfil de LinkedIn para compartirlo con empleadores.
+                </p>
+                <LinkedInButton
+                  certTitle={
+                    getAttribute(getAttrs(cert.metadata), "microcredencial") !== "—"
+                      ? getAttribute(getAttrs(cert.metadata), "microcredencial")
+                      : `Certificado #${cert.tokenId}`
+                  }
+                  issueDate={getAttribute(getAttrs(cert.metadata), "fecha")}
+                  tokenId={params.tokenId}
+                  certUrl={verifyUrl}
                 />
               </div>
             )}

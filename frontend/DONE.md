@@ -1,5 +1,30 @@
 # Frontend — DONE
 
+## Sesion actual (2026-06-02) — Boton Anadir a LinkedIn
+
+### Cambios
+
+| Archivo | Tipo | Descripcion |
+|---------|------|-------------|
+| `components/LinkedInButton.tsx` | Nuevo | Componente cliente reutilizable; construye la URL de LinkedIn `profile/add` con `URLSearchParams`; extrae ano/mes de la fecha ISO; abre en `target="_blank" rel="noopener noreferrer"`; SVG del logo de LinkedIn inline; estilo con color corporativo `#0077b5` |
+| `app/verify/[tokenId]/page.tsx` | Actualizado | Nueva seccion "Compartir en LinkedIn" (seccion 7) con `LinkedInButton`; solo visible en certificados validos; usa datos SSR ya disponibles |
+| `components/CertificateListCard.tsx` | Actualizado | Boton `LinkedInButton` anadido al grupo de acciones del card; solo visible en certificados validos; `certUrl` usa el `verifyUrl` calculado via `useEffect` con `window.location.origin` |
+
+### Comportamiento implementado
+
+- URL generada: `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=...&organizationName=ISTER&issueYear=...&issueMonth=...&certUrl=...&certId=...`
+- Todos los parametros URL-encoded via `URLSearchParams`
+- Si la fecha esta ausente ("—") o no es parseable, `issueYear` e `issueMonth` se omiten
+- El boton no aparece en certificados revocados
+- Icono SVG oficial de LinkedIn inline (sin dependencias externas)
+- Estilo coherente con los otros botones del proyecto (Tailwind, `inline-flex items-center gap-1.5`)
+
+### Dependencias anadidas
+
+Ninguna nueva.
+
+---
+
 ## Sesion actual (2026-06-02) — Modo presentacion pantalla completa en /verify/[tokenId]
 
 ### Cambios

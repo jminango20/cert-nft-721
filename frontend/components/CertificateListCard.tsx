@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { OwnedCertificate } from "@/lib/api";
 import { getAttribute } from "@/lib/attributeHelper";
+import LinkedInButton from "@/components/LinkedInButton";
 
 // Loaded client-side only — @react-pdf/renderer is incompatible with SSR
 const CertificateDownloadButton = dynamic(
@@ -156,6 +157,14 @@ export default function CertificateListCard({ cert, studentName }: Props) {
               studentName={studentName ?? "Participante"}
               txHash={cert.txHash}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            />
+          )}
+          {!cert.isRevoked && (
+            <LinkedInButton
+              certTitle={displayTitle}
+              issueDate={rawDate}
+              tokenId={cert.tokenId}
+              certUrl={verifyUrl}
             />
           )}
         </div>
