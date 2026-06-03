@@ -2,3 +2,7 @@ node_modules/
 dist/
 .env
 claims.json
+educert.db
+educert.db-journal
+
+/src/generated/prisma

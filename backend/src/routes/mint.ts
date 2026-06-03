@@ -6,9 +6,9 @@ import rateLimit from "express-rate-limit";
 import { requireApiKey } from "../middleware/auth";
 import { uploadMetadata, uploadBufferToIPFS } from "../services/ipfs";
 import { mintCertificate } from "../services/blockchain";
-import { saveTx } from "../services/TxIndex";
 import { saveClaim, makeExpiry } from "../services/claims";
 import { sendClaimEmail } from "../services/email";
+import { certificateRepository } from "../services/CertificateRepository";
 import { CertificateMetadata, EvidenceItem, ClaimRecord } from "../types";
 
 const router = Router();
@@ -216,7 +216,23 @@ router.post(
       }
 
       const { tokenId, txHash } = await mintCertificate(walletAddress, ipfsUri);
-      saveTx(tokenId.toString(), txHash);
+
+      // Persist to SQLite
+      try {
+        await certificateRepository.save({
+          tokenId: Number(tokenId),
+          txHash,
+          recipientName,
+          recipientEmail: recipientEmail ?? null,
+          courseTitle,
+          claimToken: null,
+          claimExpiresAt: null,
+          ipfsCid,
+          ownerAddress: walletAddress,
+        });
+      } catch (dbErr) {
+        console.warn("[mint] DB save failed (non-fatal):", dbErr);
+      }
 
       res.status(201).json({ tokenId, txHash, ipfsCid, flow: "direct-mint" });
     } catch (err: unknown) {

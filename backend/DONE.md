@@ -1,5 +1,50 @@
 # Backend — DONE
 
+## feat(backend): add Prisma + SQLite certificate repository
+
+### New files
+- `prisma/schema.prisma` — Certificate model (tokenId, txHash, recipientName, recipientEmail, courseTitle, issuedAt, revokedAt, claimToken, claimExpiresAt, claimedAt, claimedBy, ipfsCid, ownerAddress)
+- `prisma/migrations/20260603014003_init/migration.sql` — initial SQLite schema
+- `prisma.config.ts` — Prisma v7 config file (datasource URL, dotenv integration)
+- `src/services/CertificateRepository.ts` — singleton Prisma-backed repository with `save`, `findByTokenId`, `findAll`, `markRevoked`, `markClaimed`, `findByClaimToken`
+- `src/routes/admin.ts` — GET /api/admin/certificates (x-api-key protected)
+- `educert.db` — SQLite database file (in .gitignore)
+
+### Updated files
+- `src/routes/mint.ts` — direct-mint path now calls `certificateRepository.save()`; `saveTx` import removed
+- `src/routes/revoke.ts` — calls `certificateRepository.markRevoked()` after on-chain revoke
+- `src/routes/claim.ts` — calls `certificateRepository.markClaimed()` or `save()` on redemption; `saveTx` import removed
+- `src/index.ts` — registered `/api/admin` router
+- `.gitignore` — added `educert.db`, `educert.db-journal`
+- `.env.example` — added `DATABASE_URL="file:./educert.db"`
+
+### New endpoint
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | /api/admin/certificates | x-api-key | All certs ordered by issuedAt desc with `estado` field |
+
+### `estado` field logic
+- `"revogado"` — revokedAt is not null
+- `"pendente"` — claimedAt is null (and not revoked)
+- `"valido"` — claimedAt is not null (and not revoked)
+
+### New environment variable
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | SQLite file path, e.g. `file:./educert.db` |
+
+### Backward compatibility
+- `tx-index.json` and `claims.json` are still written by the legacy code paths (`saveClaim` in claim-by-email, `associateWallet` in claim redemption). DB writes are non-fatal (try/catch with console.warn) so existing tokens 1–5 keep working.
+- `GET /api/certificates?owner=` still reads `tx-index.json` for token discovery (unchanged).
+
+### Tech notes
+- Prisma v7 requires a driver adapter even for SQLite. Uses `@prisma/adapter-better-sqlite3`.
+- `PrismaClient` constructor receives `{ adapter }` with `PrismaBetterSqlite3({ url: DATABASE_URL })`.
+- `tsc --noEmit` passes with 0 errors.
+
+---
+
 ## perf(backend): in-memory cache for IPFS metadata fetches
 
 ### Changes

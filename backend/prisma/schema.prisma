@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Certificate {
+  id             Int       @id @default(autoincrement())
+  tokenId        Int       @unique
+  txHash         String
+  recipientName  String
+  recipientEmail String?
+  courseTitle    String
+  issuedAt       DateTime  @default(now())
+  revokedAt      DateTime?
+  claimToken     String?   @unique
+  claimExpiresAt DateTime?
+  claimedAt      DateTime?
+  claimedBy      String?
+  ipfsCid        String
+  ownerAddress   String?
+}

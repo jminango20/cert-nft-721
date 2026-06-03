@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { getClaim, associateWallet } from "../services/claims";
 import { mintCertificate } from "../services/blockchain";
-import { saveTx } from "../services/TxIndex";
+import { certificateRepository } from "../services/CertificateRepository";
 
 const router = Router();
 
@@ -76,9 +76,37 @@ router.post("/:token", async (req: Request, res: Response): Promise<void> => {
   try {
     const ipfsUri = `ipfs://${record.ipfsCid}`;
     const { tokenId, txHash } = await mintCertificate(walletAddress, ipfsUri);
-    saveTx(tokenId.toString(), txHash);
 
     associateWallet(token, walletAddress, tokenId, txHash);
+
+    // Persist claim to SQLite — find by claimToken and update, or create new row
+    try {
+      const existing = await certificateRepository.findByClaimToken(token);
+      if (existing) {
+        await certificateRepository.markClaimed(
+          token,
+          walletAddress,
+          Number(tokenId),
+          txHash
+        );
+      } else {
+        await certificateRepository.save({
+          tokenId: Number(tokenId),
+          txHash,
+          recipientName: record.recipientName,
+          recipientEmail: record.recipientEmail ?? null,
+          courseTitle: record.courseTitle,
+          claimToken: token,
+          claimExpiresAt: new Date(record.expiresAt),
+          claimedAt: new Date(),
+          claimedBy: walletAddress,
+          ipfsCid: record.ipfsCid ?? "",
+          ownerAddress: walletAddress,
+        });
+      }
+    } catch (dbErr) {
+      console.warn("[claim] DB update failed (non-fatal):", dbErr);
+    }
 
     res.status(201).json({ tokenId, txHash, ipfsCid: record.ipfsCid });
   } catch (err: unknown) {

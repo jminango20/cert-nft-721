@@ -3,6 +3,7 @@ import { z } from "zod";
 import { validate } from "../middleware/validate";
 import { requireApiKey } from "../middleware/auth";
 import { revokeCertificate } from "../services/blockchain";
+import { certificateRepository } from "../services/CertificateRepository";
 
 const router = Router();
 
@@ -21,6 +22,14 @@ router.post("/", requireApiKey, validate(RevokeSchema), async (req, res) => {
   try {
     const { tokenId } = req.body;
     const { txHash } = await revokeCertificate(tokenId);
+
+    // Persist revocation to SQLite — non-fatal
+    try {
+      await certificateRepository.markRevoked(tokenId);
+    } catch (dbErr) {
+      console.warn("[revoke] DB markRevoked failed (non-fatal):", dbErr);
+    }
+
     res.json({ txHash, tokenId });
   } catch (err: unknown) {
     const e = err as { status?: number; message?: string };

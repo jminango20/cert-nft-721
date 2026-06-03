@@ -9,6 +9,7 @@ import verifyRouter from "./routes/verify";
 import metadataRouter from "./routes/metadata";
 import claimRouter from "./routes/claim";
 import certificatesRouter from "./routes/certificates";
+import adminRouter from "./routes/admin";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use("/api/verify", verifyRouter);
 app.use("/api/metadata", metadataRouter);
 app.use("/api/claim", claimRouter);
 app.use("/api/certificates", certificatesRouter);
+app.use("/api/admin", adminRouter);
 
 app.use((_req, res) => res.status(404).json({ error: "Not found" }));
 
