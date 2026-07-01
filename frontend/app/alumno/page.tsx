@@ -7,7 +7,7 @@ import PrivyButton from "@/components/PrivyButton";
 import CertificateListCard from "@/components/CertificateListCard";
 import { api, OwnedCertificate } from "@/lib/api";
 
-export default function AlunoPage() {
+export default function AlumnoPage() {
   const { ready, authenticated, user } = usePrivy();
 
   function getStudentName(): string {

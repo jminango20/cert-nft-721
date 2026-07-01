@@ -48,6 +48,10 @@ vi.mock("../services/email", () => ({
   sendClaimEmail: vi.fn(),
 }));
 
+vi.mock("../services/CertificateRepository", () => ({
+  certificateRepository: { save: vi.fn() },
+}));
+
 import { uploadMetadata } from "../services/ipfs";
 import { mintCertificate } from "../services/blockchain";
 import { saveClaim } from "../services/claims";

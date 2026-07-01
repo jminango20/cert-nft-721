@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model Certificate {
@@ -21,4 +21,31 @@ model Certificate {
   claimedBy      String?
   ipfsCid        String
   ownerAddress   String?
+}
+
+model Claim {
+  token             String    @id
+  recipientName     String
+  courseTitle       String
+  courseId          String
+  studentIdHash     String
+  issueDate         String
+  ects              Float
+  eqfLevel          Int
+  assessmentType    String
+  participationMode String
+  learningOutcomes  String
+  evidences         Json
+  ipfsCid           String?
+  walletAddress     String?
+  claimed           Boolean   @default(false)
+  tokenId           String?
+  txHash            String?
+  expiresAt         DateTime
+  createdAt         DateTime  @default(now())
+}
+
+model TxIndexEntry {
+  tokenId String @id
+  txHash  String
 }

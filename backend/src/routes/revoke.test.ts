@@ -25,6 +25,10 @@ vi.mock("../services/blockchain", () => ({
   revokeCertificate: vi.fn(),
 }));
 
+vi.mock("../services/CertificateRepository", () => ({
+  certificateRepository: { markRevoked: vi.fn() },
+}));
+
 import { revokeCertificate } from "../services/blockchain";
 import revokeRouter from "./revoke";
 

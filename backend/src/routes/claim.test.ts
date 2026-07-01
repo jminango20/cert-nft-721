@@ -29,6 +29,14 @@ vi.mock("../services/blockchain", () => ({
   mintCertificate: vi.fn(),
 }));
 
+vi.mock("../services/CertificateRepository", () => ({
+  certificateRepository: {
+    findByClaimToken: vi.fn(),
+    markClaimed: vi.fn(),
+    save: vi.fn(),
+  },
+}));
+
 import { getClaim, associateWallet } from "../services/claims";
 import { mintCertificate } from "../services/blockchain";
 import claimRouter from "./claim";

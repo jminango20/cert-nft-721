@@ -20,7 +20,7 @@ export default function Home() {
           </Link>
 
           <Link
-            href="/aluno"
+            href="/alumno"
             className="block p-6 bg-white rounded-xl shadow hover:shadow-md border border-gray-200 hover:border-brand-500 transition-all"
           >
             <div className="text-3xl mb-2">🎓</div>

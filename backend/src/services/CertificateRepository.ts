@@ -1,6 +1,5 @@
-import path from "path";
-import { PrismaClient, Certificate } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { Certificate } from "@prisma/client";
+import { prisma } from "./prismaClient";
 import { getTx } from "./TxIndex";
 
 export interface CreateCertificateData {
@@ -17,18 +16,8 @@ export interface CreateCertificateData {
   ownerAddress?: string | null;
 }
 
-function createPrismaClient(): PrismaClient {
-  const url = process.env.DATABASE_URL ?? "file:" + path.resolve(__dirname, "../../educert.db");
-  const adapter = new PrismaBetterSqlite3({ url });
-  return new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0]);
-}
-
 class CertificateRepository {
-  private readonly prisma: PrismaClient;
-
-  constructor() {
-    this.prisma = createPrismaClient();
-  }
+  private readonly prisma = prisma;
 
   async save(data: CreateCertificateData): Promise<Certificate> {
     return this.prisma.certificate.create({
