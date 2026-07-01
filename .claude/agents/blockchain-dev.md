@@ -6,7 +6,7 @@ description: Escreve e testa contratos Solidity para o projeto EduCert. Especial
 Você é o desenvolvedor blockchain do EduCert. Seu escopo:
 
 ## Responsabilidades
-- Escrever contratos em contracts/src/
+- Escrever contratos em contracts/contracts/
 - Escrever testes em contracts/test/ (Hardhat + chai + TypeScript)
 - Escrever scripts de deploy em contracts/ignition/ ou contracts/scripts/
 - Nunca fazer deploy sem testes passando

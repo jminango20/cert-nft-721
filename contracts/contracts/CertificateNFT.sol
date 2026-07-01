@@ -40,7 +40,7 @@ contract CertificateNFT is ERC721URIStorage, AccessControl {
 
     // ------------------------------------------------------------------ state
 
-    /// @notice Auto-incrementing counter used to generate unique token IDs.
+    /// @notice Auto-incrementing counter used to generate unique token IDs. First token = 1.
     uint256 private _nextTokenId;
 
     /// @notice Whether a given token has been revoked by an issuer.
@@ -151,7 +151,7 @@ contract CertificateNFT is ERC721URIStorage, AccessControl {
 
     /**
      * @dev Override _update to block all transfers except mints (from == address(0)).
-     *      Burns are also blocked to preserve the on-chain certificate record.
+     *      Burns are intentionally blocked — the on-chain certificate record must be preserved.
      * @param to      Destination address.
      * @param tokenId Token being moved.
      * @param auth    Authorised operator (unused here).
