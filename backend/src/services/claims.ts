@@ -25,6 +25,13 @@ export async function saveClaim(record: ClaimRecord): Promise<void> {
   await writeAll(all);
 }
 
+export async function getPendingClaims(): Promise<ClaimRecord[]> {
+  const all = await readAll();
+  return Object.values(all).filter(
+    (record) => !record.claimed && Date.now() <= record.expiresAt
+  );
+}
+
 export async function getClaim(token: string): Promise<ClaimRecord | null> {
   const all = await readAll();
   const record = all[token];

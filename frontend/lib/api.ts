@@ -89,6 +89,10 @@ export const api = {
   // Claim flow
   getClaim: (token: string) => get<ClaimPreview>(`/api/claim/${token}`),
   // Wallet-based certificate listing
-  getCertificatesByOwner: (owner: string) =>
-    get<OwnedCertificate[]>(`/api/certificates?owner=${encodeURIComponent(owner)}`),
+  getCertificatesByOwner: async (owner: string) => {
+    const res = await get<{ data: OwnedCertificate[]; page: number; limit: number; total: number }>(
+      `/api/certificates?owner=${encodeURIComponent(owner)}`
+    );
+    return res.data;
+  },
 };

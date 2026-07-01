@@ -5,7 +5,7 @@ export const privyConfig: PrivyClientConfig = {
   appearance: {
     theme: "light",
     accentColor: "#2563eb",
-    logo: "/logo.png",
+    logo: "/icon-192.png",
   },
   embeddedWallets: {
     createOnLogin: "users-without-wallets",
