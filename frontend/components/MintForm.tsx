@@ -100,18 +100,25 @@ export default function MintForm() {
 
       const titles: string[] = [];
       const types: string[] = [];
+      const links: { type: string; title: string; url: string }[] = [];
 
       for (const ev of evidences) {
         if (ev.file) {
           fd.append("evidences", ev.file, ev.file.name);
           titles.push(ev.title || ev.file.name);
           types.push(ev.type);
+        } else if (ev.url.trim()) {
+          links.push({ type: ev.type, title: ev.title || ev.url, url: ev.url.trim() });
         }
       }
 
       if (titles.length > 0) {
         fd.append("evidenceTitles", JSON.stringify(titles));
         fd.append("evidenceTypes", JSON.stringify(types));
+      }
+
+      if (links.length > 0) {
+        fd.append("evidenceLinks", JSON.stringify(links));
       }
 
       const res = await fetch("/api/mint", {

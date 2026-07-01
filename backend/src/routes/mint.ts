@@ -185,6 +185,24 @@ router.post(
         });
       }
 
+      // --- Link-based evidence (e.g. Video, Enlace) — no file upload, stored as-is ---
+      const rawLinks = req.body["evidenceLinks"];
+      if (typeof rawLinks === "string") {
+        try {
+          const links = JSON.parse(rawLinks) as { type: string; title: string; url: string }[];
+          for (const link of links) {
+            if (!link.url) continue;
+            resolvedEvidences.push({
+              type: link.type,
+              title: link.title,
+              url: link.url,
+            });
+          }
+        } catch {
+          // malformed evidenceLinks — ignore rather than fail the whole mint
+        }
+      }
+
       // --- Build IPFS metadata (NO personal data on-chain / IPFS) ---
       const metadata: CertificateMetadata = {
         name: `EduCert — ${courseTitle}`,
