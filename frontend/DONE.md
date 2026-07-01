@@ -1,5 +1,20 @@
 # Frontend — DONE
 
+## Sesion actual (2026-07-01) — QA fixes: BACKEND_URL server-side
+
+### Archivos modificados
+
+| Archivo | Tipo | Descripcion |
+|---------|------|-------------|
+| `app/api/claim/[token]/route.ts` | Corregido | `NEXT_PUBLIC_BACKEND_URL` → `BACKEND_URL` en variable de entorno server-side (linea 3) |
+| `.env.local.example` | Actualizado | Anadida variable `BACKEND_URL=http://localhost:3001` para documentar la variable server-side |
+
+### Dependencias anadidas
+
+Ninguna nueva.
+
+---
+
 ## Sesion actual (2026-07-01) — 16 bugs/mejoras/limpiezas aplicadas
 
 ### Archivos modificados
