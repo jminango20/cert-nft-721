@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { keccak256 } from "viem";
+import { ipfsToHttp } from "@/lib/ipfs";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -151,10 +152,7 @@ async function verifyIntegrity(
   url: string,
   storedHash: string
 ): Promise<{ ok: boolean; message: string }> {
-  // Resolve ipfs:// to a public gateway
-  const resolvedUrl = url.startsWith("ipfs://")
-    ? url.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/")
-    : url;
+  const resolvedUrl = ipfsToHttp(url);
 
   const res = await fetch(resolvedUrl);
   if (!res.ok) {
@@ -182,9 +180,7 @@ async function verifyIntegrity(
 function EvidenceCard({ item }: { item: EvidenceItem }) {
   const [integrity, setIntegrity] = useState<IntegrityState>({ status: "idle" });
 
-  const resolvedUrl = item.url.startsWith("ipfs://")
-    ? item.url.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/")
-    : item.url;
+  const resolvedUrl = ipfsToHttp(item.url);
 
   async function handleVerify() {
     if (!item.hash) return;

@@ -73,14 +73,8 @@ export default function CertificateListCard({ cert, studentName }: Props) {
   }
 
   function handlePresent() {
-    // Navigate to present mode in same tab, then request fullscreen from user gesture
+    // Navigate to present mode; VerifyPresentMode will request fullscreen on mount via useEffect.
     router.push(`/verify/${cert.tokenId}?present=true`);
-    const el = document.documentElement;
-    if (el.requestFullscreen) {
-      el.requestFullscreen().catch(() => {
-        // Fullscreen denied — page still opens in present mode
-      });
-    }
   }
 
   return (

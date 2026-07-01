@@ -14,20 +14,20 @@ export interface AdminCertificate {
   claimedBy: string | null;
   ownerAddress: string | null;
   ipfsCid: string | null;
-  estado: "valido" | "pendente" | "revogado";
+  estado: "valido" | "pendiente" | "revocado";
 }
 
-type FilterEstado = "all" | "valido" | "pendente" | "revogado";
+type FilterEstado = "all" | "valido" | "pendiente" | "revocado";
 
 function EstadoBadge({ estado }: { estado: AdminCertificate["estado"] }) {
-  if (estado === "revogado") {
+  if (estado === "revocado") {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
-        <span aria-hidden="true">&#10007;</span> Revogado
+        <span aria-hidden="true">&#10007;</span> Revocado
       </span>
     );
   }
-  if (estado === "pendente") {
+  if (estado === "pendiente") {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
         <span aria-hidden="true">&#9203;</span> Pendiente de reclamar
@@ -112,7 +112,7 @@ export default function CertificateTable() {
       setCerts((prev) =>
         prev.map((c) =>
           c.tokenId === tokenId
-            ? { ...c, estado: "revogado", revokedAt: new Date().toISOString() }
+            ? { ...c, estado: "revocado" as const, revokedAt: new Date().toISOString() }
             : c
         )
       );
@@ -130,8 +130,8 @@ export default function CertificateTable() {
   const filterLabels: Record<FilterEstado, string> = {
     all: "Todos",
     valido: "Validos",
-    pendente: "Pendientes de reclamar",
-    revogado: "Revogados",
+    pendiente: "Pendientes de reclamar",
+    revocado: "Revocados",
   };
 
   return (
@@ -240,7 +240,7 @@ export default function CertificateTable() {
                 <tr
                   key={cert.id}
                   className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                    cert.estado === "revogado" ? "bg-red-50 hover:bg-red-50" : ""
+                    cert.estado === "revocado" ? "bg-red-50 hover:bg-red-50" : ""
                   }`}
                 >
                   <td className="py-2.5 pr-4 font-medium text-gray-800">
@@ -273,14 +273,14 @@ export default function CertificateTable() {
                       ) : (
                         <span className="text-xs text-gray-300">Ver</span>
                       )}
-                      {cert.estado !== "revogado" && cert.tokenId && (
+                      {cert.estado !== "revocado" && cert.tokenId && (
                         <button
                           onClick={() => handleRevoke(cert.tokenId!)}
                           disabled={revoking === cert.tokenId}
                           className="text-xs text-red-500 hover:underline disabled:opacity-50"
-                          title="Revogar certificado"
+                          title="Revocar certificado"
                         >
-                          {revoking === cert.tokenId ? "Revogando..." : "Revogar"}
+                          {revoking === cert.tokenId ? "Revocando..." : "Revocar"}
                         </button>
                       )}
                     </div>

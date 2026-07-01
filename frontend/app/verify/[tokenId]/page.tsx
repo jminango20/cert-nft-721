@@ -1,31 +1,19 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { CertificateInfo } from "@/lib/api";
+import { CertificateInfo, EvidenceItem } from "@/lib/api";
+import { getAttribute, Attribute } from "@/lib/attributeHelper";
+import { ipfsToHttp } from "@/lib/ipfs";
 import QRCodeSection from "@/components/QRCodeSection";
 import EvidenceList from "@/components/EvidenceList";
 import VerifyDownloadButton from "@/components/VerifyDownloadButton";
 import VerifyPresentMode from "@/components/VerifyPresentMode";
 import LinkedInButton from "@/components/LinkedInButton";
-import { getAttribute } from "@/lib/attributeHelper";
 import BlockchainProofHeading from "@/components/BlockchainProofHeading";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3001";
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 const EXPLORER_BASE = "https://sepolia.etherscan.io";
-
-interface EvidenceItem {
-  type: string;
-  title: string;
-  url: string;
-  hash?: string;
-  mimeType?: string;
-}
-
-interface Attribute {
-  trait_type: string;
-  value: string;
-}
 
 async function getCert(tokenId: string): Promise<CertificateInfo | null> {
   try {
@@ -37,13 +25,6 @@ async function getCert(tokenId: string): Promise<CertificateInfo | null> {
   } catch {
     return null;
   }
-}
-
-function ipfsToHttp(uri: string): string {
-  if (uri.startsWith("ipfs://")) {
-    return `https://gateway.pinata.cloud/ipfs/${uri.replace("ipfs://", "")}`;
-  }
-  return uri;
 }
 
 function getAttrs(metadata: Record<string, unknown> | null): Attribute[] {
@@ -59,7 +40,7 @@ export default async function VerifyTokenPage({
   const cert = await getCert(params.tokenId);
   const verifyUrl = `${APP_URL}/verify/${params.tokenId}`;
 
-  // Precompute values for VerifyPresentMode (Server Component → Client Component props)
+  // Precompute attribute array once — reused throughout the page
   const certAttrs = cert ? getAttrs(cert.metadata) : [];
   const presentTitle = getAttribute(certAttrs, "microcredencial");
   const presentInstitution = getAttribute(certAttrs, "institucion");
@@ -97,7 +78,7 @@ export default async function VerifyTokenPage({
     <div className="min-h-screen flex flex-col items-center p-6 bg-gray-50">
       <div className="max-w-2xl w-full space-y-4 py-6">
         <Link href="/verify" className="text-sm text-brand-600 hover:underline block">
-          Verificar outro certificado
+          Verificar otro certificado
         </Link>
 
         {!cert ? (
@@ -129,18 +110,18 @@ export default async function VerifyTokenPage({
                     {cert.isRevoked ? "Revocado" : "Valido"}
                   </p>
                   <p className="text-base mt-1 opacity-90 font-medium">
-                    {getAttribute(getAttrs(cert.metadata), "microcredencial") !== "—"
-                      ? getAttribute(getAttrs(cert.metadata), "microcredencial")
+                    {getAttribute(certAttrs, "microcredencial") !== "—"
+                      ? getAttribute(certAttrs, "microcredencial")
                       : `Certificado #${cert.tokenId}`}
                   </p>
                   <p className="text-sm opacity-80 mt-0.5">
-                    {getAttribute(getAttrs(cert.metadata), "institucion") !== "—"
-                      ? getAttribute(getAttrs(cert.metadata), "institucion")
+                    {getAttribute(certAttrs, "institucion") !== "—"
+                      ? getAttribute(certAttrs, "institucion")
                       : "ISTER"}
-                    {getAttribute(getAttrs(cert.metadata), "fecha") !== "—" && (
+                    {getAttribute(certAttrs, "fecha") !== "—" && (
                       <>
                         {" · "}
-                        {new Date(getAttribute(getAttrs(cert.metadata), "fecha")).toLocaleDateString("es-ES", {
+                        {new Date(getAttribute(certAttrs, "fecha")).toLocaleDateString("es-ES", {
                           day: "numeric",
                           month: "long",
                           year: "numeric",
@@ -165,26 +146,26 @@ export default async function VerifyTokenPage({
                 <div>
                   <dt className="text-gray-500 text-xs">Fecha de emision</dt>
                   <dd className="font-medium">
-                    {getAttribute(getAttrs(cert.metadata), "fecha") !== "—"
-                      ? new Date(getAttribute(getAttrs(cert.metadata), "fecha")).toLocaleDateString("es-ES")
+                    {getAttribute(certAttrs, "fecha") !== "—"
+                      ? new Date(getAttribute(certAttrs, "fecha")).toLocaleDateString("es-ES")
                       : "—"}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Creditos ECTS</dt>
-                  <dd className="font-medium">{getAttribute(getAttrs(cert.metadata), "ects")}</dd>
+                  <dd className="font-medium">{getAttribute(certAttrs, "ects")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Nivel EQF</dt>
-                  <dd className="font-medium">{getAttribute(getAttrs(cert.metadata), "eqf")}</dd>
+                  <dd className="font-medium">{getAttribute(certAttrs, "eqf")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Modalidad</dt>
-                  <dd className="font-medium">{getAttribute(getAttrs(cert.metadata), "modalidad")}</dd>
+                  <dd className="font-medium">{getAttribute(certAttrs, "modalidad")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Tipo de Evaluacion</dt>
-                  <dd className="font-medium">{getAttribute(getAttrs(cert.metadata), "evaluac")}</dd>
+                  <dd className="font-medium">{getAttribute(certAttrs, "evaluac")}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500 text-xs">Soulbound</dt>
@@ -192,11 +173,11 @@ export default async function VerifyTokenPage({
                 </div>
               </dl>
 
-              {getAttribute(getAttrs(cert.metadata), "aprendizaje") !== "—" && (
+              {getAttribute(certAttrs, "aprendizaje") !== "—" && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <dt className="text-gray-500 text-xs mb-1">Resultados de Aprendizaje</dt>
                   <dd className="text-sm text-gray-700">
-                    {getAttribute(getAttrs(cert.metadata), "aprendizaje")}
+                    {getAttribute(certAttrs, "aprendizaje")}
                   </dd>
                 </div>
               )}
@@ -306,7 +287,7 @@ export default async function VerifyTokenPage({
                 </p>
                 <VerifyDownloadButton
                   tokenId={params.tokenId}
-                  attributes={getAttrs(cert.metadata)}
+                  attributes={certAttrs}
                   txHash={cert.txHash}
                 />
               </div>
@@ -321,11 +302,11 @@ export default async function VerifyTokenPage({
                 </p>
                 <LinkedInButton
                   certTitle={
-                    getAttribute(getAttrs(cert.metadata), "microcredencial") !== "—"
-                      ? getAttribute(getAttrs(cert.metadata), "microcredencial")
+                    getAttribute(certAttrs, "microcredencial") !== "—"
+                      ? getAttribute(certAttrs, "microcredencial")
                       : `Certificado #${cert.tokenId}`
                   }
-                  issueDate={getAttribute(getAttrs(cert.metadata), "fecha")}
+                  issueDate={getAttribute(certAttrs, "fecha")}
                   tokenId={params.tokenId}
                   certUrl={verifyUrl}
                 />

@@ -34,7 +34,8 @@ export interface MintResult {
   txHash?: string;
   ipfsCid: string;
   claimToken?: string;
-  flow: "direct-mint" | "claim-by-email";
+  claimUrl?: string;
+  flow: "direct-mint" | "claim-by-email" | "claim-link";
 }
 
 export interface CertificateInfo {

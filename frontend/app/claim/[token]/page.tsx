@@ -2,22 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-
-interface ClaimPreview {
-  courseTitle: string;
-  courseId: string;
-  issueDate: string;
-  ects: number;
-  eqfLevel: number;
-  assessmentType: string;
-  participationMode: string;
-  learningOutcomes: string;
-  evidences: { type: string; title: string; url: string; hash?: string }[];
-  ipfsCid?: string;
-  alreadyClaimed: boolean;
-  tokenId?: string;
-}
+import { ClaimPreview } from "@/lib/api";
 
 export default function ClaimPage() {
   const params = useParams();
@@ -51,7 +38,12 @@ export default function ClaimPage() {
       return;
     }
 
-    const wallet = wallets[0];
+    // Prefer Privy embedded wallet, fall back to first connected wallet
+    const privyWallet = wallets.find(
+      (w) => "walletClientType" in w && w.walletClientType === "privy"
+    );
+    const wallet = privyWallet ?? wallets[0];
+
     if (!wallet) {
       setClaimError("No hay cartera conectada. Por favor, vuelve a iniciar sesion.");
       return;
@@ -180,9 +172,17 @@ export default function ClaimPage() {
           <div className="bg-green-50 border border-green-200 rounded-xl p-5 text-center">
             <p className="font-semibold text-green-800">Certificado ya reclamado</p>
             {preview!.tokenId && (
-              <p className="text-sm text-gray-600 mt-1">
-                Token ID #{preview!.tokenId}
-              </p>
+              <>
+                <p className="text-sm text-gray-600 mt-1">
+                  Token ID #{preview!.tokenId}
+                </p>
+                <Link
+                  href={`/verify/${preview!.tokenId}`}
+                  className="inline-block mt-3 text-sm text-brand-600 hover:underline font-medium"
+                >
+                  Ver mi certificado
+                </Link>
+              </>
             )}
           </div>
         ) : claimResult ? (
@@ -200,6 +200,12 @@ export default function ClaimPage() {
                 <dd className="font-mono text-xs truncate">{claimResult.txHash}</dd>
               </div>
             </dl>
+            <Link
+              href={`/verify/${claimResult.tokenId}`}
+              className="inline-block mt-4 text-sm text-brand-600 hover:underline font-medium"
+            >
+              Ver mi certificado
+            </Link>
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow border border-gray-200 p-5">

@@ -220,7 +220,7 @@ export default function CertificatePDF({
 
   const shortAddress = contractAddress ?? null;
 
-  const verifyUrl = `https://educert.vercel.app/verify/${tokenId}`;
+  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/verify/${tokenId}`;
 
   return (
     <Document

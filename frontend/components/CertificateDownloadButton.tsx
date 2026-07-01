@@ -38,7 +38,7 @@ function CertificateDownloadButtonInner({
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const verifyUrl = `https://educert.vercel.app/verify/${tokenId}`;
+    const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/verify/${tokenId}`;
     QRCode.toDataURL(verifyUrl, {
       errorCorrectionLevel: "M",
       margin: 1,

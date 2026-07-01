@@ -1,5 +1,37 @@
 # Frontend — DONE
 
+## Sesion actual (2026-07-01) — 16 bugs/mejoras/limpiezas aplicadas
+
+### Archivos modificados
+
+| Archivo | Tipo | Descripcion |
+|---------|------|-------------|
+| `app/verify/page.tsx` | Actualizado | Convertido de "use client" a Server Component puro; usa `searchParams.tokenId` + `redirect()` para SSR sin JS; form nativo `method="GET"` |
+| `app/verify/[tokenId]/page.tsx` | Actualizado | Elimina `EvidenceItem` y `Attribute` locales (importa de api.ts y attributeHelper.ts); reemplaza todas las llamadas `getAttrs(cert.metadata)` por `certAttrs` ya precomputado; usa `BACKEND_URL` (privada) en lugar de `NEXT_PUBLIC_BACKEND_URL`; importa `ipfsToHttp` de lib/ipfs.ts |
+| `app/providers.tsx` | Actualizado | `QueryClient` movido a dentro del componente con `useState(() => new QueryClient())` para evitar shared state en SSR |
+| `app/aluno/page.tsx` | Actualizado | `getWalletAddress` convertida a `useCallback` con dependencia `[user]`; eliminado `eslint-disable` |
+| `app/claim/[token]/page.tsx` | Actualizado | Elimina `ClaimPreview` local, importa de `lib/api.ts`; resolucion de wallet alineada con aluno (prefiere `walletClientType === "privy"`); link "Ver mi certificado" en estado de exito y ya-reclamado |
+| `app/api/mint/route.ts` | Actualizado | `NEXT_PUBLIC_BACKEND_URL` → `BACKEND_URL` (server-side, sin prefijo publico) |
+| `app/api/revoke/route.ts` | Actualizado | `NEXT_PUBLIC_BACKEND_URL` → `BACKEND_URL` |
+| `app/api/admin/certificates/route.ts` | Actualizado | `NEXT_PUBLIC_BACKEND_URL` → `BACKEND_URL` |
+| `components/CertificatePDF.tsx` | Actualizado | URL hardcoded `https://educert.vercel.app/verify/...` → `${process.env.NEXT_PUBLIC_APP_URL}/verify/...` |
+| `components/CertificateDownloadButton.tsx` | Actualizado | Misma URL hardcoded reemplazada por `NEXT_PUBLIC_APP_URL ?? window.location.origin` |
+| `components/CertificateListCard.tsx` | Actualizado | `requestFullscreen` eliminado del handler `handlePresent` — ahora lo gestiona `VerifyPresentMode.useEffect` al montar con `?present=true` |
+| `components/CertificateTable.tsx` | Actualizado | Estandarizado a espanol: `"revogado"` → `"revocado"`, `"pendente"` → `"pendiente"`, etiquetas de filtro, badge, titulo boton, class condicional de fila, actualizacion de estado local |
+| `components/MintForm.tsx` | Actualizado | Elimina `MintResult` local, importa de `lib/api.ts`; campo wallet con `pattern="^0x[0-9a-fA-F]{40}$"`, `title` y mensaje de error inline |
+| `components/EvidenceList.tsx` | Actualizado | Reemplaza inline `url.replace("ipfs://", ...)` por `ipfsToHttp()` importado de `lib/ipfs.ts` |
+| `lib/ipfs.ts` | Nuevo | Helper `ipfsToHttp(uri)` unico — elimina duplicacion en 3 archivos |
+| `lib/api.ts` | Actualizado | `MintResult.claimUrl` anadido; union de `flow` extendida con `"claim-link"` |
+| `lib/attributeHelper.ts` | Actualizado | `Attribute` exportada para reutilizacion en otros modulos |
+| `components/CertDashboard.tsx` | Eliminado | Dead code — no importado en ninguna pagina |
+| `components/CertificateCard.tsx` | Eliminado | Dead code — no importado en ninguna pagina |
+
+### Dependencias anadidas
+
+Ninguna nueva.
+
+---
+
 ## Sesion actual (2026-06-02) — Boton Anadir a LinkedIn
 
 ### Cambios

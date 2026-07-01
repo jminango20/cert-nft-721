@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { usePrivy } from "@privy-io/react-auth";
 import PrivyButton from "@/components/PrivyButton";
@@ -24,7 +24,7 @@ export default function AlunoPage() {
   const [error, setError] = useState("");
 
   // Resolve the wallet address from Privy — prefer embedded wallet, fall back to linked wallet
-  function getWalletAddress(): string | null {
+  const getWalletAddress = useCallback((): string | null => {
     if (!user) return null;
     const embedded = user.linkedAccounts?.find(
       (a) => a.type === "wallet" && "walletClientType" in a && a.walletClientType === "privy"
@@ -33,7 +33,7 @@ export default function AlunoPage() {
     const anyWallet = user.linkedAccounts?.find((a) => a.type === "wallet");
     if (anyWallet && "address" in anyWallet) return anyWallet.address as string;
     return null;
-  }
+  }, [user]);
 
   useEffect(() => {
     if (!ready || !authenticated) return;
@@ -49,8 +49,7 @@ export default function AlunoPage() {
         setError(err instanceof Error ? err.message : "Error al cargar certificados")
       )
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, authenticated, user]);
+  }, [ready, authenticated, getWalletAddress]);
 
   return (
     <div className="min-h-screen p-6 max-w-2xl mx-auto">

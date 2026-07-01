@@ -1,21 +1,13 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { MintResult } from "@/lib/api";
 
 interface EvidenceEntry {
   type: string;
   title: string;
   file: File | null;
   url: string;
-}
-
-interface MintResult {
-  tokenId?: string;
-  txHash?: string;
-  ipfsCid: string;
-  claimToken?: string;
-  claimUrl?: string;
-  flow: "direct-mint" | "claim-by-email" | "claim-link";
 }
 
 const EVIDENCE_TYPES = ["PDF", "Imagen", "Enlace", "Video"];
@@ -226,8 +218,15 @@ export default function MintForm() {
               value={form.walletAddress}
               onChange={(e) => setField("walletAddress", e.target.value)}
               className={inputCls}
+              pattern="^0x[0-9a-fA-F]{40}$"
+              title="Direccion Ethereum valida (0x seguido de 40 caracteres hexadecimales)"
               required
             />
+            {form.walletAddress && !/^0x[0-9a-fA-F]{40}$/.test(form.walletAddress) && (
+              <p className="text-xs text-red-600 mt-1">
+                Direccion invalida. Debe empezar con 0x seguido de 40 caracteres hexadecimales.
+              </p>
+            )}
           </div>
         )}
 
