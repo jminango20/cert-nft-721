@@ -127,6 +127,7 @@ router.post(
         participationMode,
         learningOutcomes,
         walletAddress,
+        flow,
       } = req.body as {
         recipientName: string;
         recipientEmail?: string;
@@ -140,6 +141,7 @@ router.post(
         participationMode: string;
         learningOutcomes: string;
         walletAddress?: string;
+        flow?: string;
       };
 
       // Compute hash internally — plain studentId never leaves this function
@@ -227,9 +229,11 @@ router.post(
       const ipfsUri = await uploadMetadata(metadata);
       const ipfsCid = ipfsUri.replace("ipfs://", "");
 
-      // --- Claim-by-email flow ---
+      // --- Claim-link and claim-by-email flows (no walletAddress yet) ---
       if (!walletAddress) {
-        if (!recipientEmail) {
+        const isClaimLink = flow === "claim-link";
+
+        if (!isClaimLink && !recipientEmail) {
           res.status(400).json({ error: "walletAddress or recipientEmail required" });
           return;
         }
@@ -259,19 +263,21 @@ router.post(
 
         await saveClaim(record);
 
-        // Send email using recipientEmail from request body (not from claims.json — GDPR)
-        try {
-          await sendClaimEmail({
-            recipientName,
-            recipientEmail: recipientEmail!,
-            courseTitle,
-            claimToken,
-          });
-        } catch (emailErr) {
-          console.warn("[mint] email send failed (non-fatal):", emailErr);
+        if (!isClaimLink) {
+          // Send email using recipientEmail from request body (not from claims.json — GDPR)
+          try {
+            await sendClaimEmail({
+              recipientName,
+              recipientEmail: recipientEmail!,
+              courseTitle,
+              claimToken,
+            });
+          } catch (emailErr) {
+            console.warn("[mint] email send failed (non-fatal):", emailErr);
+          }
         }
 
-        res.status(201).json({ claimToken, ipfsCid, flow: "claim-by-email" });
+        res.status(201).json({ claimToken, ipfsCid, flow: isClaimLink ? "claim-link" : "claim-by-email" });
         return;
       }
 
