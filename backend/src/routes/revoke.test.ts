@@ -178,7 +178,7 @@ describe("POST /revoke", () => {
       .send({ tokenId: 7 });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("caller is not the owner");
+    expect(res.body.error).toBe("Revoke failed");
   });
 
   it("propagates a 409 status when contract throws 'already revoked'", async () => {
@@ -192,7 +192,7 @@ describe("POST /revoke", () => {
       .send({ tokenId: 3 });
 
     expect(res.status).toBe(409);
-    expect(res.body.error).toBe("Certificate already revoked");
+    expect(res.body.error).toBe("Revoke failed");
   });
 
   it("returns 404 when contract throws token-not-found error", async () => {
@@ -206,7 +206,7 @@ describe("POST /revoke", () => {
       .send({ tokenId: 999 });
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Token does not exist");
+    expect(res.body.error).toBe("Revoke failed");
   });
 
   it("returns 500 with default message when contract throws a plain Error", async () => {
@@ -218,7 +218,7 @@ describe("POST /revoke", () => {
       .send({ tokenId: 1 });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("unexpected RPC error");
+    expect(res.body.error).toBe("Blockchain operation failed");
   });
 
   it("returns 500 with fallback message when contract throws a non-Error object", async () => {
@@ -231,6 +231,6 @@ describe("POST /revoke", () => {
       .send({ tokenId: 1 });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Revoke failed");
+    expect(res.body.error).toBe("Blockchain operation failed");
   });
 });

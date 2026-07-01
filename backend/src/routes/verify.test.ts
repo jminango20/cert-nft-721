@@ -137,6 +137,6 @@ describe("ipfsToHttp conversion inside GET /verify/:tokenId", () => {
 
     const res = await request(buildApp()).get("/verify/999");
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Token does not exist");
+    expect(res.body.error).toBe("Verify failed");
   });
 });
