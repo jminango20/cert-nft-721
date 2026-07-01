@@ -1,9 +1,18 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { getCertificateInfo } from "../services/blockchain";
 
 const router = Router();
 
-router.get("/:tokenId", async (req, res) => {
+// H6: Rate limit — 60 req/min per IP
+const readLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.get("/:tokenId", readLimiter, async (req, res) => {
   try {
     const tokenId = parseInt(req.params.tokenId, 10);
     if (isNaN(tokenId) || tokenId <= 0) {

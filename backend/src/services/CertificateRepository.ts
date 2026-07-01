@@ -1,3 +1,4 @@
+import path from "path";
 import { PrismaClient, Certificate } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { getTx } from "./TxIndex";
@@ -17,7 +18,7 @@ export interface CreateCertificateData {
 }
 
 function createPrismaClient(): PrismaClient {
-  const url = process.env.DATABASE_URL ?? "file:./educert.db";
+  const url = process.env.DATABASE_URL ?? "file:" + path.resolve(__dirname, "../../educert.db");
   const adapter = new PrismaBetterSqlite3({ url });
   return new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0]);
 }
@@ -60,12 +61,13 @@ class CertificateRepository {
   }
 
   async markRevoked(tokenId: number): Promise<void> {
+    const existingTxHash = await getTx(tokenId.toString());
     await this.prisma.certificate.upsert({
       where: { tokenId },
       update: { revokedAt: new Date() },
       create: {
         tokenId,
-        txHash: getTx(tokenId.toString()) ?? "legacy",
+        txHash: existingTxHash ?? "legacy",
         recipientName: "legacy",
         courseTitle: "legacy",
         ipfsCid: "legacy",

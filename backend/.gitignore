@@ -4,5 +4,6 @@ dist/
 claims.json
 educert.db
 educert.db-journal
+tx-index.json
 
 /src/generated/prisma

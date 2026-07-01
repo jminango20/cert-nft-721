@@ -32,9 +32,10 @@ router.post("/", requireApiKey, validate(RevokeSchema), async (req, res) => {
 
     res.json({ txHash, tokenId });
   } catch (err: unknown) {
-    const e = err as { status?: number; message?: string };
+    console.error("[revoke error]", err);
+    const e = err as { status?: number };
     const status = e.status ?? 500;
-    const message = e.message ?? "Revoke failed";
+    const message = status === 500 ? "Blockchain operation failed" : "Revoke failed";
     res.status(status).json({ error: message });
   }
 });

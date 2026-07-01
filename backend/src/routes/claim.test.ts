@@ -48,7 +48,7 @@ function buildApp() {
 const fakeClaimRecord = {
   token: "valid-claim-token-uuid",
   recipientName: "Ana Silva",
-  recipientEmail: "ana@example.com",
+  // recipientEmail removed from ClaimRecord (GDPR — stored in SQLite only)
   courseTitle: "Blockchain Fundamentals",
   courseId: "BC-101",
   studentIdHash: "0xdeadbeef000000000000000000000000000000000000000000000000deadbeef",

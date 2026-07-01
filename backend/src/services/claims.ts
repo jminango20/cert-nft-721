@@ -2,38 +2,44 @@ import fs from "fs";
 import path from "path";
 import { ClaimRecord } from "../types";
 
-const CLAIMS_FILE = path.resolve(process.cwd(), "claims.json");
+const CLAIMS_FILE = path.resolve(__dirname, "../../claims.json");
 const TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 
-function readAll(): Record<string, ClaimRecord> {
-  if (!fs.existsSync(CLAIMS_FILE)) return {};
+// C2: All file I/O is async to avoid blocking the event loop
+async function readAll(): Promise<Record<string, ClaimRecord>> {
   try {
-    return JSON.parse(fs.readFileSync(CLAIMS_FILE, "utf-8"));
+    const content = await fs.promises.readFile(CLAIMS_FILE, "utf-8");
+    return JSON.parse(content);
   } catch {
     return {};
   }
 }
 
-function writeAll(data: Record<string, ClaimRecord>): void {
-  fs.writeFileSync(CLAIMS_FILE, JSON.stringify(data, null, 2), "utf-8");
+async function writeAll(data: Record<string, ClaimRecord>): Promise<void> {
+  await fs.promises.writeFile(CLAIMS_FILE, JSON.stringify(data, null, 2), "utf-8");
 }
 
-export function saveClaim(record: ClaimRecord): void {
-  const all = readAll();
+export async function saveClaim(record: ClaimRecord): Promise<void> {
+  const all = await readAll();
   all[record.token] = record;
-  writeAll(all);
+  await writeAll(all);
 }
 
-export function getClaim(token: string): ClaimRecord | null {
-  const all = readAll();
+export async function getClaim(token: string): Promise<ClaimRecord | null> {
+  const all = await readAll();
   const record = all[token];
   if (!record) return null;
   if (Date.now() > record.expiresAt) return null;
   return record;
 }
 
-export function associateWallet(token: string, walletAddress: string, tokenId?: string, txHash?: string): ClaimRecord | null {
-  const all = readAll();
+export async function associateWallet(
+  token: string,
+  walletAddress: string,
+  tokenId?: string,
+  txHash?: string
+): Promise<ClaimRecord | null> {
+  const all = await readAll();
   const record = all[token];
   if (!record) return null;
   if (Date.now() > record.expiresAt) return null;
@@ -42,7 +48,7 @@ export function associateWallet(token: string, walletAddress: string, tokenId?: 
   if (tokenId) record.tokenId = tokenId;
   if (txHash) record.txHash = txHash;
   all[token] = record;
-  writeAll(all);
+  await writeAll(all);
   return record;
 }
 

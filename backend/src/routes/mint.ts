@@ -2,14 +2,63 @@ import { Router, Request, Response } from "express";
 import multer from "multer";
 import { keccak256, toUtf8Bytes } from "ethers";
 import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 import rateLimit from "express-rate-limit";
 import { requireApiKey } from "../middleware/auth";
+import { validate } from "../middleware/validate";
 import { uploadMetadata, uploadBufferToIPFS } from "../services/ipfs";
 import { mintCertificate } from "../services/blockchain";
 import { saveClaim, makeExpiry } from "../services/claims";
 import { sendClaimEmail } from "../services/email";
 import { certificateRepository } from "../services/CertificateRepository";
 import { CertificateMetadata, EvidenceItem, ClaimRecord } from "../types";
+
+const MintSchema = z
+  .object({
+    recipientName: z.string().trim().min(1, "recipientName is required"),
+    recipientEmail: z
+      .string()
+      .trim()
+      .email("Invalid email")
+      .optional()
+      .or(z.literal("")),
+    courseTitle: z.string().trim().min(1, "courseTitle is required"),
+    courseId: z.string().trim().min(1, "courseId is required"),
+    studentId: z.string().trim().min(1, "studentId is required"),
+    issueDate: z
+      .string()
+      .trim()
+      .min(1, "issueDate is required")
+      .refine((val) => !isNaN(Date.parse(val)), { message: "issueDate must be a valid date string" }),
+    ects: z
+      .union([
+        z.number().min(0),
+        z
+          .string()
+          .regex(/^\d+(\.\d+)?$/, "ects must be a non-negative number")
+          .transform(Number),
+      ])
+      .refine((n) => !isNaN(n) && n >= 0, {
+        message: "ects must be a non-negative number",
+      }),
+    eqfLevel: z
+      .union([
+        z.number().int(),
+        z.string().regex(/^\d+$/).transform(Number),
+      ])
+      .refine((n) => Number.isInteger(n) && n >= 1 && n <= 8, {
+        message: "eqfLevel must be 1-8",
+      }),
+    assessmentType: z.string().trim().optional().default(""),
+    participationMode: z.string().trim().optional().default(""),
+    learningOutcomes: z.string().trim().optional().default(""),
+    walletAddress: z
+      .string()
+      .trim()
+      .regex(/^0x[0-9a-fA-F]{40}$/, "Invalid walletAddress")
+      .optional(),
+  })
+  .passthrough();
 
 const router = Router();
 
@@ -61,9 +110,10 @@ router.post(
   mintLimiter,
   requireApiKey,
   upload.array("evidences", 10),
+  validate(MintSchema),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      // --- Parse and validate body fields ---
+      // --- Fields are validated and coerced by the Zod schema above ---
       const {
         recipientName,
         recipientEmail,
@@ -71,32 +121,29 @@ router.post(
         courseId,
         studentId,
         issueDate,
-        ects,
-        eqfLevel,
+        ects: ectsNum,
+        eqfLevel: eqfNum,
         assessmentType,
         participationMode,
         learningOutcomes,
         walletAddress,
-      } = req.body as Record<string, string>;
-
-      if (!recipientName || !courseTitle || !courseId || !studentId || !issueDate) {
-        res.status(400).json({ error: "Missing required fields: recipientName, courseTitle, courseId, studentId, issueDate" });
-        return;
-      }
+      } = req.body as {
+        recipientName: string;
+        recipientEmail?: string;
+        courseTitle: string;
+        courseId: string;
+        studentId: string;
+        issueDate: string;
+        ects: number;
+        eqfLevel: number;
+        assessmentType: string;
+        participationMode: string;
+        learningOutcomes: string;
+        walletAddress?: string;
+      };
 
       // Compute hash internally — plain studentId never leaves this function
       const studentIdHash = keccak256(toUtf8Bytes(studentId));
-
-      const ectsNum = Number(ects);
-      const eqfNum = Number(eqfLevel);
-      if (isNaN(ectsNum) || ectsNum < 0) {
-        res.status(400).json({ error: "ects must be a non-negative number" });
-        return;
-      }
-      if (isNaN(eqfNum) || eqfNum < 1 || eqfNum > 8) {
-        res.status(400).json({ error: "eqfLevel must be 1-8" });
-        return;
-      }
 
       // --- Parse evidence titles and types ---
       let evidenceTitles: string[] = [];
@@ -170,10 +217,11 @@ router.post(
         }
 
         const claimToken = uuidv4();
+        const expiresAt = makeExpiry();
         const record: ClaimRecord = {
           token: claimToken,
           recipientName,
-          recipientEmail,
+          // recipientEmail is NOT stored in claims.json (GDPR — personal data stays in SQLite only)
           courseTitle,
           courseId,
           studentIdHash,
@@ -187,17 +235,17 @@ router.post(
           ipfsCid,
           walletAddress: null,
           claimed: false,
-          expiresAt: makeExpiry(),
+          expiresAt,
           createdAt: Date.now(),
         };
 
-        saveClaim(record);
+        await saveClaim(record);
 
-        // Send email — non-fatal if Resend not configured
+        // Send email using recipientEmail from request body (not from claims.json — GDPR)
         try {
           await sendClaimEmail({
             recipientName,
-            recipientEmail,
+            recipientEmail: recipientEmail!,
             courseTitle,
             claimToken,
           });
@@ -209,11 +257,7 @@ router.post(
         return;
       }
 
-      // --- Direct wallet mint ---
-      if (!/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
-        res.status(400).json({ error: "Invalid walletAddress" });
-        return;
-      }
+      // --- Direct wallet mint (walletAddress already validated by Zod schema) ---
 
       const { tokenId, txHash } = await mintCertificate(walletAddress, ipfsUri);
 

@@ -1,16 +1,14 @@
 import { PinataSDK } from "pinata";
 import { CertificateMetadata } from "../types";
 
-function getClient(): PinataSDK {
-  const jwt = process.env.PINATA_JWT;
-  if (!jwt) throw new Error("PINATA_JWT not set");
-  return new PinataSDK({ pinataJwt: jwt });
-}
+// Module-level singleton — created once and reused for all calls
+const _jwt = process.env.PINATA_JWT;
+if (!_jwt) throw new Error("PINATA_JWT not set");
+const pinata = new PinataSDK({ pinataJwt: _jwt });
 
 export async function uploadMetadata(
   metadata: CertificateMetadata
 ): Promise<string> {
-  const pinata = getClient();
   const result = await pinata.upload.public
     .json(metadata)
     .name(`educert-${Date.now()}`);
@@ -26,8 +24,6 @@ export async function uploadEvidenceFile(
   title: string
 ): Promise<string | null> {
   try {
-    const pinata = getClient();
-
     const response = await fetch(url, { signal: AbortSignal.timeout(30_000) });
     if (!response.ok) {
       throw new Error(`Fetch failed: ${response.status} ${response.statusText}`);
@@ -61,9 +57,8 @@ export async function uploadBufferToIPFS(
   mimeType: string
 ): Promise<{ cid: string; ipfsUri: string } | null> {
   try {
-    const pinata = getClient();
     const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_") || "evidence";
-    const file = new File([buffer], safeName, { type: mimeType });
+    const file = new File([new Uint8Array(buffer)], safeName, { type: mimeType });
     const result = await pinata.upload.public
       .file(file)
       .name(`educert-evidence-${Date.now()}-${safeName}`);

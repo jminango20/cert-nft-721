@@ -1,19 +1,31 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
+import rateLimit from "express-rate-limit";
 import { getClaim, associateWallet } from "../services/claims";
 import { mintCertificate } from "../services/blockchain";
 import { certificateRepository } from "../services/CertificateRepository";
 
 const router = Router();
 
+// H6: Rate limit read endpoint — 60 req/min per IP
+const readLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// C1: In-process set of tokens currently being processed to prevent double-mint
+const processingTokens = new Set<string>();
+
 /**
  * GET /api/claim/:token
  * Returns certificate preview data for the claim link.
  * No wallet address required — public endpoint (token is the secret).
  */
-router.get("/:token", async (req: Request, res: Response): Promise<void> => {
+router.get("/:token", readLimiter, async (req: Request, res: Response): Promise<void> => {
   const { token } = req.params;
-  const record = getClaim(token);
+  const record = await getClaim(token);
 
   if (!record) {
     res.status(404).json({ error: "Claim token not found or expired" });
@@ -57,27 +69,34 @@ router.post("/:token", async (req: Request, res: Response): Promise<void> => {
 
   const { walletAddress } = parsed.data;
 
-  const record = getClaim(token);
-  if (!record) {
-    res.status(404).json({ error: "Claim token not found or expired" });
+  // C1: Synchronous check-and-add — atomic in Node's single-threaded event loop
+  if (processingTokens.has(token)) {
+    res.status(409).json({ error: "Claim is already being processed" });
     return;
   }
-
-  if (record.claimed || record.walletAddress) {
-    res.status(409).json({ error: "Certificate already claimed", tokenId: record.tokenId });
-    return;
-  }
-
-  if (!record.ipfsCid) {
-    res.status(500).json({ error: "IPFS metadata not found for this claim" });
-    return;
-  }
+  processingTokens.add(token);
 
   try {
+    const record = await getClaim(token);
+    if (!record) {
+      res.status(404).json({ error: "Claim token not found or expired" });
+      return;
+    }
+
+    if (record.claimed || record.walletAddress) {
+      res.status(409).json({ error: "Certificate already claimed", tokenId: record.tokenId });
+      return;
+    }
+
+    if (!record.ipfsCid) {
+      res.status(500).json({ error: "IPFS metadata not found for this claim" });
+      return;
+    }
+
     const ipfsUri = `ipfs://${record.ipfsCid}`;
     const { tokenId, txHash } = await mintCertificate(walletAddress, ipfsUri);
 
-    associateWallet(token, walletAddress, tokenId, txHash);
+    await associateWallet(token, walletAddress, tokenId, txHash);
 
     // Persist claim to SQLite — find by claimToken and update, or create new row
     try {
@@ -94,7 +113,7 @@ router.post("/:token", async (req: Request, res: Response): Promise<void> => {
           tokenId: Number(tokenId),
           txHash,
           recipientName: record.recipientName,
-          recipientEmail: record.recipientEmail ?? null,
+          // recipientEmail is not in ClaimRecord (GDPR) — it was stored in SQLite at mint time
           courseTitle: record.courseTitle,
           claimToken: token,
           claimExpiresAt: new Date(record.expiresAt),
@@ -113,6 +132,9 @@ router.post("/:token", async (req: Request, res: Response): Promise<void> => {
     console.error("[claim mint error]", err);
     const message = err instanceof Error ? err.message : "Mint failed";
     res.status(500).json({ error: message });
+  } finally {
+    // C1: Always release the lock so the token can be retried if mint failed
+    processingTokens.delete(token);
   }
 });
 

@@ -1,5 +1,228 @@
 # Backend — DONE
 
+## fix(backend): pre-deploy audit — LOW fixes
+
+### Files changed
+- `backend/.gitignore` — L1
+- `src/index.ts` — L2, L5, L6, L8
+- `src/routes/mint.ts` — L7
+- `backend/tsconfig.json` — L4
+- `src/services/ipfs.ts` — L4 (side-effect fix)
+
+### Fixes applied
+
+**L1 — tx-index.json not in .gitignore** (`backend/.gitignore`)
+Added `tx-index.json` to the ignore list alongside `claims.json` and `educert.db`.
+
+**L2 — PRIVATE_KEY format not validated** (`src/index.ts`)
+Added format check inside `validateEnv()`: strips optional `0x` prefix and tests
+`/^[0-9a-fA-F]{64}$/`. Exits at startup with `"PRIVATE_KEY must be a 64-character
+hex string"` if the value is malformed, preventing cryptic ethers errors at request time.
+
+**L3 — Inline partial ABI duplicate** (`src/routes/certificates.ts`)
+Already resolved by a previous agent: `ABI` is exported from `src/services/blockchain.ts`
+and `certificates.ts` uses `getReadContract()` rather than a local ABI literal. No change
+needed.
+
+**L4 — Missing DOM lib for fetch/AbortSignal** (`backend/tsconfig.json`)
+Added `"DOM"` to the `lib` array: `["ES2020", "DOM"]`. Fixed the resulting type error in
+`src/services/ipfs.ts` where `new File([buffer], ...)` expected a `BlobPart`-compatible
+value: changed `[buffer]` to `[new Uint8Array(buffer)]` which satisfies the DOM `File`
+constructor under strict typing.
+
+**L5 — RESEND_FROM_EMAIL not validated** (`src/index.ts`)
+Added a warning (not exit) inside `validateEnv()`: if `RESEND_API_KEY` is set but
+`RESEND_FROM_EMAIL` is not, logs `[env] RESEND_API_KEY is set but RESEND_FROM_EMAIL is
+not — emails may fail if default domain is unverified`.
+
+**L6 — No request correlation ID** (`src/index.ts`)
+Added middleware (after `express.json()`) that calls `crypto.randomUUID()` (Node 18+
+built-in) and stores the result in `res.locals.requestId`. The middleware also logs
+`[request] METHOD /path id=<uuid>` for every incoming request, enabling log correlation
+across concurrent async operations.
+
+**L7 — issueDate format not validated** (`src/routes/mint.ts`)
+Added `.refine(val => !isNaN(Date.parse(val)), { message: "issueDate must be a valid
+date string" })` to the `issueDate` field in `MintSchema`. Values like `"not a date"`
+now return a 400 validation error instead of being silently stored in IPFS metadata.
+
+**L8 — Helmet defaults only** (`src/index.ts`)
+Replaced `helmet()` with an explicit config: `defaultSrc: ["'self'"]`,
+`scriptSrc: ["'none'"]`, `objectSrc: ["'none'"]`. Set `crossOriginEmbedderPolicy: false`
+to prevent breaking IPFS/Pinata image loading.
+
+### Verification
+- `npx tsc --noEmit` exits 0 with no errors after all changes.
+
+---
+
+## fix(backend): pre-deploy audit — MEDIUM fixes
+
+### Files changed
+- `src/routes/mint.ts` — M1, M5
+- `src/routes/revoke.ts` — M2
+- `src/routes/verify.ts` — M2
+- `src/services/email.ts` — M3
+- `src/services/claims.ts` — M4
+- `src/services/TxIndex.ts` — M4
+- `src/types/index.ts` — M5
+- `src/routes/claim.ts` — M5
+- `src/routes/claim.test.ts` — M5 (fixture update)
+- `src/services/ipfs.ts` — M6
+- `src/index.ts` — M7
+- `src/services/blockchain.ts` — M8
+- `src/services/CertificateRepository.ts` — M9
+
+### Fixes applied
+
+**M1 — Zod validation on POST /api/mint** (`src/routes/mint.ts`)
+Replaced ad-hoc `if (!field)` checks and `Number()` coercions (lines 82-99) with a
+`MintSchema` Zod object. Uses `.trim().min(1)` for required strings (whitespace-only
+rejected), numeric union transforms for `ects` and `eqfLevel` with range refinements,
+and `.passthrough()` to preserve `evidenceTitles`/`evidenceTypes`. Applied via the
+existing `validate` middleware inserted after `upload.array`.
+
+**M2 — Unsafe error cast leaks internals** (`src/routes/revoke.ts`, `src/routes/verify.ts`)
+Replaced `(err as { message? }).message` responses with `console.error` for the full
+error server-side and a fixed generic message `"Blockchain operation failed"` for 500s.
+Non-500 status codes (e.g. 404) retain their specific messages. HTTP status code logic
+unchanged.
+
+**M3 — HTML injection in email template** (`src/services/email.ts`)
+Added `escapeHtml(str)` helper replacing `&`, `<`, `>`, `"`, `'` with HTML entities.
+Applied to `recipientName`, `courseTitle`, and the claim URL before interpolation into
+the HTML email body.
+
+**M4 — process.cwd() path fragility** (`src/services/claims.ts`, `src/services/TxIndex.ts`)
+Replaced `path.resolve(process.cwd(), ...)` with `path.resolve(__dirname, '../../...')` so
+paths are relative to the compiled source file, not the process working directory.
+
+**M5 — Recipient email in plaintext JSON** (`src/types/index.ts`, `src/routes/mint.ts`, `src/routes/claim.ts`, `src/routes/claim.test.ts`)
+Removed `recipientEmail` from the `ClaimRecord` interface; it is no longer written to
+`claims.json`. The email is still available in the mint route handler from `req.body`
+(sent directly to Resend) and remains in the SQLite `Certificate` table (via the direct-
+mint and claim-completion paths). The claim.ts else-branch fallback now saves without
+email (null) — acceptable for the PoC since the email was already sent at mint time.
+
+**M6 — New PinataSDK per call** (`src/services/ipfs.ts`)
+Removed the `getClient()` factory function. The SDK is now instantiated once at module
+level (`const pinata = new PinataSDK(...)`) and reused by all three exported functions.
+
+**M7 — CORS insecure fallback** (`src/index.ts`)
+`FRONTEND_URL` is now split on commas and each entry trimmed, producing an
+`allowedOrigins` array. The CORS `origin` callback checks incoming requests against that
+array. Requests with no `Origin` header (curl, server-to-server) are always allowed. A
+startup warning is logged if `allowedOrigins` is empty.
+
+**M8 — isLocked hardcoded true** (`src/services/blockchain.ts`)
+`contract.locked(tokenId)` is now called in the same `Promise.all` alongside
+`ownerOf` and `isRevoked`. The returned boolean is used directly for `isLocked` in the
+`CertificateInfo` response.
+
+**M9 — DATABASE_URL relative path fallback** (`src/services/CertificateRepository.ts`)
+Default fallback changed from `"file:./educert.db"` to
+`"file:" + path.resolve(__dirname, '../../educert.db')` for a stable absolute path
+regardless of working directory. Added `import path from "path"`.
+
+### Verification
+- `npx tsc --noEmit` exits 0 with no errors after all changes.
+
+---
+
+## fix(backend): pre-deploy audit — CRITICAL and HIGH fixes
+
+### Files changed
+- `src/routes/claim.ts`
+- `src/routes/certificates.ts`
+- `src/routes/verify.ts`
+- `src/routes/metadata.ts`
+- `src/routes/mint.ts`
+- `src/index.ts`
+- `src/services/CertificateRepository.ts`
+
+### Fixes applied
+
+**C1 — Double-mint race condition** (`src/routes/claim.ts`)
+Added a module-level `Set<string> processingTokens`. Before any async work the
+POST handler checks-and-adds the token synchronously (atomic in Node's single
+thread) and deletes it in a `finally` block. Returns 409 immediately if the
+token is already being processed.
+
+**C2 — Sync file I/O** (pre-existing; verified)
+`src/services/claims.ts` and `src/services/TxIndex.ts` already used
+`fs.promises.*`. Fixed callers that were missing `await` (`claim.ts` GET and
+POST, `mint.ts` `saveClaim` call, `CertificateRepository.ts` `markRevoked`).
+
+**C3 — No Express error handler** (`src/index.ts`)
+Added a 4-argument `(err, req, res, next)` error handler registered after all
+routes, before `app.listen`.
+
+**C4 — No startup env validation** (`src/index.ts`)
+Added `validateEnv()` called before `app.listen`. Exits with code 1 listing any
+missing required vars (`PRIVATE_KEY`, `RPC_URL`, `CONTRACT_ADDRESS`,
+`PINATA_JWT`, `API_KEY`). Warns (no exit) if `DATABASE_URL` or `FRONTEND_URL`
+are absent.
+
+**H1 — Singleton provider/signer** (pre-existing; verified)
+`src/services/blockchain.ts` already initialises provider and signer once as
+module-level `let` variables.
+
+**H2 — Duplicate blockchain setup** (`src/routes/certificates.ts`)
+Removed the local `getProvider` / `getContract` functions and their ABI
+literal. Now imports `getReadContract` from `src/services/blockchain.ts`.
+Also fixed the import of `readAll` (non-existent) to the correct `getAllTx`.
+
+**H3 — Unlimited parallel RPC calls** (`src/routes/certificates.ts`)
+Ownership checks and detail fetches now iterate in chunks of 20 using a
+`for` loop with `Promise.all` per chunk. Added `?page=N&limit=N` query params.
+Response shape changed to `{ data: [...], page, limit, total }`.
+
+**H4 — Silent tokenId "0" fallback** (pre-existing; verified)
+`src/services/blockchain.ts` already throws a descriptive error when
+`CertificateMinted` is not found in the receipt.
+
+**H5 — saveTx never called** (pre-existing; verified)
+`src/services/blockchain.ts` already calls `saveTx(tokenId, receipt.hash)`
+after extracting the tokenId.
+
+**H6 — No rate limiting on public endpoints**
+Added `express-rate-limit` (60 req/min per IP) to:
+- `src/routes/verify.ts` — GET `/:tokenId`
+- `src/routes/metadata.ts` — GET `/:tokenId`
+- `src/routes/certificates.ts` — GET `/`
+- `src/routes/claim.ts` — GET `/:token`
+
+**H7 — Unbounded in-memory cache** (pre-existing; verified)
+`src/services/MetadataCache.ts` already uses `lru-cache` v7 with
+`max: 500` and `ttl: 3 600 000 ms`.
+
+**H8 — No graceful shutdown** (`src/index.ts`)
+`app.listen(...)` result stored as `const server`. `SIGTERM` and `SIGINT`
+handlers call `server.close(() => process.exit(0))`.
+
+**H9 — PII on unauthenticated endpoint** (`src/routes/certificates.ts`)
+`recipientName` removed from the response object in `GET /api/certificates`.
+
+### Verification
+- `npx tsc --noEmit` exits 0 with no errors after all changes.
+
+### Required environment variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PRIVATE_KEY` | Yes | Issuer wallet private key |
+| `RPC_URL` | Yes | Sepolia JSON-RPC endpoint |
+| `CONTRACT_ADDRESS` | Yes | Deployed EduCert contract address |
+| `PINATA_JWT` | Yes | Pinata v2 JWT for IPFS uploads |
+| `API_KEY` | Yes | `x-api-key` header value for write routes |
+| `DATABASE_URL` | Warn | SQLite path e.g. `file:./educert.db` |
+| `FRONTEND_URL` | Warn | CORS allowed origin (default `http://localhost:3000`) |
+| `PORT` | No | HTTP port (default `3001`) |
+| `RESEND_API_KEY` | No | Resend key for claim-by-email (optional) |
+| `RESEND_FROM_EMAIL` | No | Sender address for claim emails (optional) |
+
+---
+
 ## fix(backend): upsert in markRevoked to handle legacy tokens
 
 ### Problem

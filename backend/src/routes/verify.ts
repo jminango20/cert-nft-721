@@ -1,10 +1,19 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { getCertificateInfo } from "../services/blockchain";
 import { fetchMetadataWithCache } from "../services/MetadataCache";
 
 const router = Router();
 
-router.get("/:tokenId", async (req, res) => {
+// H6: Rate limit — 60 req/min per IP
+const readLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.get("/:tokenId", readLimiter, async (req, res) => {
   try {
     const tokenId = parseInt(req.params.tokenId, 10);
     if (isNaN(tokenId) || tokenId <= 0) {
@@ -24,9 +33,10 @@ router.get("/:tokenId", async (req, res) => {
 
     res.json(info);
   } catch (err: unknown) {
-    const e = err as { status?: number; message?: string };
+    console.error("[verify error]", err);
+    const e = err as { status?: number };
     const status = e.status ?? 500;
-    const message = e.message ?? "Verify failed";
+    const message = status === 500 ? "Blockchain operation failed" : "Verify failed";
     res.status(status).json({ error: message });
   }
 });

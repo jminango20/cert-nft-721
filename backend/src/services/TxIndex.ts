@@ -1,23 +1,30 @@
 import fs from "fs";
 import path from "path";
 
-const TX_FILE = path.resolve(process.cwd(), "tx-index.json");
+const TX_FILE = path.resolve(__dirname, "../../tx-index.json");
 
-export function readAll(): Record<string, string> {
-  if (!fs.existsSync(TX_FILE)) return {};
+// C2: All file I/O is async to avoid blocking the event loop
+async function readAll(): Promise<Record<string, string>> {
   try {
-    return JSON.parse(fs.readFileSync(TX_FILE, "utf-8"));
+    const content = await fs.promises.readFile(TX_FILE, "utf-8");
+    return JSON.parse(content);
   } catch {
     return {};
   }
 }
 
-export function saveTx(tokenId: string, txHash: string): void {
-  const all = readAll();
+export async function saveTx(tokenId: string, txHash: string): Promise<void> {
+  const all = await readAll();
   all[tokenId] = txHash;
-  fs.writeFileSync(TX_FILE, JSON.stringify(all, null, 2), "utf-8");
+  await fs.promises.writeFile(TX_FILE, JSON.stringify(all, null, 2), "utf-8");
 }
 
-export function getTx(tokenId: string): string | null {
-  return readAll()[tokenId] ?? null;
+export async function getTx(tokenId: string): Promise<string | null> {
+  const all = await readAll();
+  return all[tokenId] ?? null;
+}
+
+// Exported for certificates.ts to list all token IDs
+export async function getAllTx(): Promise<Record<string, string>> {
+  return readAll();
 }

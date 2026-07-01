@@ -50,7 +50,6 @@ export interface CertificateMetadata {
 export interface ClaimRecord {
   token: string;
   recipientName: string;
-  recipientEmail: string;
   courseTitle: string;
   courseId: string;
   studentIdHash: string;
