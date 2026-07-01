@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import sgMail from "@sendgrid/mail";
 
 function escapeHtml(str: string): string {
   return str
@@ -9,10 +9,16 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function getClient(): Resend | null {
-  const apiKey = process.env.RESEND_API_KEY;
+let initialized = false;
+
+function getClient(): typeof sgMail | null {
+  const apiKey = process.env.SENDGRID_API_KEY;
   if (!apiKey) return null;
-  return new Resend(apiKey);
+  if (!initialized) {
+    sgMail.setApiKey(apiKey);
+    initialized = true;
+  }
+  return sgMail;
 }
 
 export async function sendClaimEmail(opts: {
@@ -21,9 +27,9 @@ export async function sendClaimEmail(opts: {
   courseTitle: string;
   claimToken: string;
 }): Promise<void> {
-  const resend = getClient();
-  if (!resend) {
-    console.warn("[email] RESEND_API_KEY not configured — skipping email send");
+  const client = getClient();
+  if (!client) {
+    console.warn("[email] SENDGRID_API_KEY not configured — skipping email send");
     return;
   }
   const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:3000";
@@ -32,8 +38,8 @@ export async function sendClaimEmail(opts: {
   const safeTitle = escapeHtml(opts.courseTitle);
   const safeUrl = escapeHtml(claimUrl);
 
-  await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? "educert@ister.pt",
+  await client.send({
+    from: process.env.SENDGRID_FROM_EMAIL ?? "educert@ister.pt",
     to: opts.recipientEmail,
     subject: `Tu certificado está listo — ${safeTitle}`,
     html: `

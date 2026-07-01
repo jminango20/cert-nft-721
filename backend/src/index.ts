@@ -29,10 +29,10 @@ function validateEnv(): void {
     process.exit(1);
   }
 
-  // L5: Warn if RESEND_API_KEY is set but RESEND_FROM_EMAIL is not
-  if (process.env.RESEND_API_KEY && !process.env.RESEND_FROM_EMAIL) {
+  // L5: Warn if SENDGRID_API_KEY is set but SENDGRID_FROM_EMAIL is not
+  if (process.env.SENDGRID_API_KEY && !process.env.SENDGRID_FROM_EMAIL) {
     console.warn(
-      "[env] RESEND_API_KEY is set but RESEND_FROM_EMAIL is not — emails may fail if default domain is unverified"
+      "[env] SENDGRID_API_KEY is set but SENDGRID_FROM_EMAIL is not — emails may fail if default domain is unverified"
     );
   }
 
